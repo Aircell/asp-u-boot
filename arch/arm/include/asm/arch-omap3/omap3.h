@@ -181,6 +181,8 @@ struct gpio {
 
 #define CPU_3XX_ID_SHIFT	28
 
+#define TYPE_READTYPE           0x20000000  // Readtype, 1==sync in gpmc
+
 #define WIDTH_8BIT		0x0000
 #define WIDTH_16BIT		0x1000	/* bit pos for 16 bit in gpmc */
 

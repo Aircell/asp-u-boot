@@ -28,6 +28,9 @@
 #define __CONFIG_H
 #include <asm/sizes.h>
 
+#define CONFIG_SKIP_LOWLEVEL_INIT
+// #define CONFIG_SKIP_RELOCATE_UBOOT
+
 /*
  * High Level Configuration Options
  */
@@ -35,7 +38,8 @@
 #define CONFIG_OMAP		1	/* in a TI OMAP core */
 #define CONFIG_OMAP34XX		1	/* which is a 34XX */
 #define CONFIG_OMAP3430		1	/* which is in a 3430 */
-#define CONFIG_OMAP3_LV_SOM	1	/* working with LV_SOM */
+#define CONFIG_OMAP3_LV_SOM	1	/* working with LV_SOM/Torpedo */
+#define CONFIG_OMAP3_LOGIC	1	/* working with LV_SOM/Torpedo */
 
 #define CONFIG_SDRC			/* The chip has SDRC controller */
 
@@ -103,6 +107,24 @@
 #define CONFIG_MMC			1
 #define CONFIG_OMAP3_MMC		1
 #define CONFIG_DOS_PARTITION		1
+
+#if 1
+/* USB */
+#define CONFIG_MUSB_UDC                 1
+#define CONFIG_USB_OMAP3                1
+#define CONFIG_TWL4030_USB              1
+
+/* USB device configuration */
+#define CONFIG_USB_DEVICE               1
+#define CONFIG_USB_TTY                  1
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV    1
+
+/* Change these to suit your needs */
+#define CONFIG_USBD_VENDORID            0x0451
+#define CONFIG_USBD_PRODUCTID           0x5678
+#define CONFIG_USBD_MANUFACTURER        "Texas Instruments"
+#define CONFIG_USBD_PRODUCT_NAME        "LogicPD SOM"
+#endif
 
 /* commands to include */
 #include <config_cmd_default.h>

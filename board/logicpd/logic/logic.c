@@ -176,21 +176,31 @@ void init_vaux1_voltage(void)
 
 	// Select the output voltage
 	data = 0x04;
-	i2c_write(I2C_TRITON2, 0x72, 1, &data, 1);
+	i2c_write(TWL4030_CHIP_PM_MASTER, 0x72, 1, &data, 1);
 	// Select the Processor resource group
 	data = 0x20;
-	i2c_write(I2C_TRITON2, 0x72, 1, &data, 1);
+	i2c_write(TWL4030_CHIP_PM_MASTER, 0x72, 1, &data, 1);
 	// Enable I2C access to the Power bus
 	data = 0x02;
-	i2c_write(I2C_TRITON2, 0x4a, 1, &data, 1);
+	i2c_write(TWL4030_CHIP_PM_MASTER, 0x4a, 1, &data, 1);
 	// Send message MSB
 	msg = (1<<13) | (1<<4) | (0xd<<0); // group(process_grp1):resource(vaux1):res_active;
 	data = msg >> 8;
-	i2c_write(I2C_TRITON2, 0x4b, 1, &data, 1);
+	i2c_write(TWL4030_CHIP_PM_MASTER, 0x4b, 1, &data, 1);
 	// Send message LSB
 	data = msg & 0xff;
-	i2c_write(I2C_TRITON2, 0x4c, 1, &data, 1);
+	i2c_write(TWL4030_CHIP_PM_MASTER, 0x4c, 1, &data, 1);
 #endif
+}
+
+static void enable_charger()
+{
+	u8 val;
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, val, TWL4030_PM_MASTER_BOOT_BCI);
+	val |= 0x37;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, val, TWL4030_PM_MASTER_BOOT_BCI);
+
+	puts("Charger enabled\n");
 }
 
 /*
@@ -207,12 +217,15 @@ int misc_init_r(void)
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
+//	enable_charger();
 
 	/* Turn on vaux1 to make sure voltage is to the product ID chip.
 	 * Extract production data from ID chip, used to selectively
 	 * initialize portions of the system */
 	init_vaux1_voltage();
 	fetch_production_data();
+
+	twl4030_power_init();
 
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();
@@ -221,7 +234,6 @@ int misc_init_r(void)
 	/* Setup access to the isp1760 chip on CS6 */
 	setup_isp1760_chip();
 
-	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 
 	/* Configure GPIOs to output */
