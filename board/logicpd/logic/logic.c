@@ -82,6 +82,8 @@ unsigned int logic_identify(void)
 			val = MACH_TYPE_OMAP3530_LV_SOM;
 		}
 	}
+
+	MUX_LOGIC_HSUSB0_D5_DATA5();
 	return val;
 }
 
