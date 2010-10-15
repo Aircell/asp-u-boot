@@ -120,7 +120,8 @@ int musb_platform_init(void)
 
 		/* Set OTG to always be on */
 		writel(OMAP3_OTG_SYSCONFIG_NO_STANDBY_MODE |
-		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE, &otg->sysconfig);
+		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE    |
+                       OMAP3_OTG_SYSCONFIG_SOFTRESET, &otg->sysconfig);
 
 		/* Set the interface */
 		writel(OMAP3_OTG_INTERFSEL_OMAP, &otg->interfsel);
@@ -139,6 +140,13 @@ int musb_platform_init(void)
 		*usbotghs_control = 0x15;
 #endif
 		platform_needs_initialization = 0;
+	} else {
+		// Always reset the module
+
+		/* Set OTG to always be on */
+		writel(OMAP3_OTG_SYSCONFIG_NO_STANDBY_MODE |
+		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE    |
+                       OMAP3_OTG_SYSCONFIG_SOFTRESET, &otg->sysconfig);
 	}
 
 	ret = platform_needs_initialization;
