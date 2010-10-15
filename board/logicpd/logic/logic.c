@@ -73,12 +73,9 @@ unsigned int logic_identify(void)
 		val = omap_get_gpio_datain(189);
 		omap_free_gpio(189);
 
-		printf("Board: ");
 		if (val) {
-			printf("Torpedo\n");
 			val = MACH_TYPE_OMAP3_TORPEDO;
 		} else {
-			printf("LV SOM\n");
 			val = MACH_TYPE_OMAP3530_LV_SOM;
 		}
 	}
@@ -153,7 +150,8 @@ int board_init(void)
 #endif
 
 	/* board id for Linux (placeholder until can ID board) */
-	gd->bd->bi_arch_number = MACH_TYPE_OMAP3530_LV_SOM;
+	gd->bd->bi_arch_number = logic_identify();
+
 	/* boot param addr */
 	gd->bd->bi_boot_params = (OMAP34XX_SDRC_CS0 + 0x100);
 
@@ -225,6 +223,14 @@ int misc_init_r(void)
 	 * Extract production data from ID chip, used to selectively
 	 * initialize portions of the system */
 	init_vaux1_voltage();
+
+	printf("Board: ");
+	if (gd->bd->bi_arch_number == MACH_TYPE_OMAP3_TORPEDO) {
+		printf("Torpedo\n");
+	} else {
+		printf("LV_SOM\n");
+	}
+
 	fetch_production_data();
 
 	twl4030_power_init();
@@ -248,8 +254,6 @@ int misc_init_r(void)
 		&gpio6_base->setdataout);
 	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
 		GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
-
-	gd->bd->bi_arch_number = logic_identify();
 
 	/* Fix the flash sync */
 	fix_flash_sync();
