@@ -141,6 +141,9 @@ int board_init(void)
 
 	gpmc_init(); /* in SRAM or SDRAM, finish GPMC */
 
+	/* Setup the pin MUX AGAIN! */
+	set_muxconf_regs();
+
 	/* Update NAND settings */
 	setup_nand_settings();
 

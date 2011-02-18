@@ -209,7 +209,8 @@
 	"rootdevice=/dev/mtdblock4\0" \
 	"rootfstype=yaffs\0" \
 	"mtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};bootm ${loadaddr}\0" \
-	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmcinit;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
+	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmc init;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
+	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 #define CONFIG_BOOTCOMMAND "run xipboot"
 
