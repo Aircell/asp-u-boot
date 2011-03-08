@@ -202,6 +202,16 @@
 	"rootpath=/opt/nfs-exports/ltib-omap\0" \
 	"ramdisksize=89000\0"			\
 	"kernelimage=uImage\0" \
+	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
+	"bootscript=echo Running bootscript from mmc ...; " \
+		"source ${loadaddr}\0" \
+	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
+	"mmcargs=setenv bootargs console=${consoledev},${baudrate} " \
+		"root=/dev/mmcblk0p2 rw " \
+		"rootfstype=ext3 rootwait\0" \
+	"mmcboot=echo Booting from mmc ...; " \
+	"run mmcargs; "			      \
+		"bootm ${loadaddr}\0" \
 	"nfsoptions=,wsize=1500,rsize=1500\0"				\
 	"nfsboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${serverip}:${rootpath}${nfsoptions} ip=dhcp ${otherbootargs};tftpboot ${loadaddr} ${kernelimage};bootm ${loadaddr}\0" \
 	"ramboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/ram rw ramdisk_size=${ramdisksize} ${otherbootargs};tftpboot ${loadaddr} ${kernelimage};tftpboot ${rootfsaddr} rootfs.ext2.gz.uboot;bootm ${loadaddr} ${rootfsaddr}\0" \
@@ -212,8 +222,17 @@
 	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmc init;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
 	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
-#define CONFIG_BOOTCOMMAND "run xipboot"
-
+#define CONFIG_BOOTCOMMAND \
+	"if mmc init; then " \
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"else " \
+			"if run loaduimage; then " \
+				"run mmcboot; " \
+			"else run xipboot; " \
+			"fi; " \
+		"fi; " \
+	"else run xipboot; fi"
 #else
 
 // Beagle ENV_SETTINGS
