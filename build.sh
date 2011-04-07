@@ -27,7 +27,10 @@ if [ $? -ne 0 ] || [ ! -e $target ]; then
   exit 1
 fi
 
-# Install
+## Install
+INSTALLDIR=$workspace/out
+[ -d $INSTALLDIR ] || mkdir -p $INSTALLDIR
+cp $target $INSTALLDIR
 
 echo SUCCESS
 exit 0
