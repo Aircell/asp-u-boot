@@ -20,7 +20,7 @@ if [ -e $target ]; then
 fi
 
 # Build
-make CROSS_COMPILE=arm-eabi- all
+make CROSS_COMPILE=arm-eabi- ${*:-all}
 
 if [ $? -ne 0 ] || [ ! -e $target ]; then
   echo FAIL
