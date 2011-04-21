@@ -47,6 +47,9 @@
 #define MUX_LOGIC_HSUSB0_D5_DATA5()					\
  MUX_VAL(CP(HSUSB0_DATA5),	(IEN  | PTD | DIS | M0)) /*HSUSB0_DATA5*/
 
+// mark.chung
+#define AIRCELL
+
 /*
  * Routine: logic_identify
  * Description: Detect if we are running on a Logic or Torpedo.
@@ -137,15 +140,142 @@ static void setup_cf_gpmc_setup(void)
  */
 int board_init(void)
 {
+	int c = 0; // mark.chung
+
 	DECLARE_GLOBAL_DATA_PTR;
 
 	gpmc_init(); /* in SRAM or SDRAM, finish GPMC */
 
 	/* Setup the pin MUX AGAIN! */
 	set_muxconf_regs();
+	sdelay(1024 * 1024);
 
 	/* Update NAND settings */
 	setup_nand_settings();
+
+	/* Enable LDO's for Aircell Cloudsurfer */
+#ifdef AIRCELL
+	/* jtag_emu1 for master reset */
+	if (!omap_request_gpio(31)) {
+		omap_set_gpio_dataout(31, 1);
+		omap_set_gpio_direction(31, 0);
+	}
+
+	/* MCBSP1_DR J1:154 */
+	if (!omap_request_gpio(159)) {
+		omap_set_gpio_direction(159, 0);
+		omap_set_gpio_dataout(159, 1);
+	}
+
+	/* CAM_VS J2:131 */
+	if (!omap_request_gpio(95)) {
+		omap_set_gpio_direction(95, 0);
+		omap_set_gpio_dataout(95, 1);
+	}
+
+	/* UARTA_CTS J1:162 */
+	if (!omap_request_gpio(150)) {
+		omap_set_gpio_direction(150, 0);
+		omap_set_gpio_dataout(150, 1);
+	}
+
+	/* UARTA_RTS J1:164 */
+	if (!omap_request_gpio(149)) {
+		omap_set_gpio_direction(149, 0);
+		omap_set_gpio_dataout(149, 1);
+	}
+
+	/* MMC2_DAT2 J1:220 */
+	if (!omap_request_gpio(134)) {
+		omap_set_gpio_direction(134, 0);
+		omap_set_gpio_dataout(134, 1);
+	}
+
+	/* cam_xclkb for LCD reset */
+	if (!omap_request_gpio(111)) {
+		omap_set_gpio_direction(111, 0);
+		omap_set_gpio_dataout(111, 1);
+	}
+
+	/* cam_hs for the power cut */
+	if (!omap_request_gpio(94)) {
+		omap_set_gpio_direction(94, 0);
+		omap_set_gpio_dataout(94, 0);
+	}
+
+	/* cam_d0 for handset cradle */
+	if (!omap_request_gpio(99)) {
+		omap_set_gpio_direction(99, 1);
+		omap_set_gpio_dataout(99, 0);
+	}
+
+	/* sdmmc1_dat6 for red LED */
+	if (!omap_request_gpio(128)) {
+		omap_set_gpio_direction(128, 0);
+		omap_set_gpio_dataout(128, 1);
+	}
+
+	/* mcbsp1_clkr for green LED */
+	if (!omap_request_gpio(156)) {
+		omap_set_gpio_direction(156, 0);
+		omap_set_gpio_dataout(156, 1);
+	}
+
+	/* sdmmc1_dat5 for blue LED */
+	if (!omap_request_gpio(127)) {
+		omap_set_gpio_direction(127, 0);
+		omap_set_gpio_dataout(127, 1);
+	}
+
+	/* sys_clkout2 for LED driver IC */
+	if (!omap_request_gpio(186)) {
+		omap_set_gpio_direction(186, 0);
+		omap_set_gpio_dataout(186, 1);
+	}
+
+	/* sdmmc1_dat4 for enabling the earpiece audio */
+	if (!omap_request_gpio(126)) {
+		omap_set_gpio_direction(126, 0);
+		omap_set_gpio_dataout(126, 1);
+	}
+
+	/* sdmmc1_dat7 for enabling the ringer audio */
+	if (!omap_request_gpio(129)) {
+		omap_set_gpio_direction(129, 0);
+		omap_set_gpio_dataout(129, 1);
+	}
+
+	/* uart3_cts_rctx for volume up switch */
+	if (!omap_request_gpio(163)) {
+		omap_set_gpio_direction(163, 1);
+		omap_set_gpio_dataout(163, 0);
+	}
+
+	/* uart3_rts_sd for detecting the headset plugin */
+	if (!omap_request_gpio(164)) {
+		omap_set_gpio_direction(164, 1);
+		omap_set_gpio_dataout(164, 0);
+	}
+
+	/* csi2_dx0 for volume down switch */
+	if (!omap_request_gpio(112)) {
+		omap_set_gpio_direction(112, 1);
+		omap_set_gpio_dataout(112, 0);
+	}
+
+	/* csi2_dx1 for wifi radio on/off */
+	if (!omap_request_gpio(114)) {
+		omap_set_gpio_direction(114, 1);
+		omap_set_gpio_dataout(114, 1);
+	}
+
+	/* gpmc_nbe1 for touch panel reset */
+	if (!omap_request_gpio(61)) {
+		omap_set_gpio_direction(61, 0);
+		omap_set_gpio_dataout(61, 1);
+	}
+
+#endif
 
 #if 0
 	/* Update CF settings */
@@ -385,7 +515,13 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(GPMC_NCS5), (IDIS | PTD | DIS | M7)); /*GPMC_nCS5*/
 	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | EN  | M0)); /*GPMC_nCS6*/
 	MUX_VAL(CP(GPMC_NCS7), (IEN  | PTU | EN  | M1)); /*GPMC_IO_DIR*/
+
+#ifdef AIRCELL
+	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | EN  | M4)); /*GPMC_nBE1*/
+#else
 	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | EN  | M0)); /*GPMC_nBE1*/
+#endif
+
 	MUX_VAL(CP(GPMC_WAIT0), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT0*/
 	MUX_VAL(CP(GPMC_WAIT1), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT1*/
 	MUX_VAL(CP(GPMC_WAIT2), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT2*/
@@ -426,12 +562,21 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(DSS_DATA22), (IDIS | PTD | DIS | M0)); /*DSS_DATA22*/
 	MUX_VAL(CP(DSS_DATA23), (IDIS | PTD | DIS | M0)); /*DSS_DATA23*/
 	/*CAMERA*/
-	MUX_VAL(CP(CAM_HS), (IEN  | PTU | EN  | M0)); /*CAM_HS */
-	MUX_VAL(CP(CAM_VS), (IEN  | PTU | EN  | M0)); /*CAM_VS */
+#ifdef AIRCELL
+	MUX_VAL(CP(CAM_HS), (IDIS  | PTU | DIS  | M4)); /*CAM_HS */
+	MUX_VAL(CP(CAM_VS), (IDIS | PTU | DIS  | M4)); /*GPIO_95 */
+#else
+	MUX_VAL(CP(CAM_HS), (IDIS  | PTU | EN  | M0)); /*CAM_HS */
+	MUX_VAL(CP(CAM_VS), (IEN  | PTU | EN  | M7)); /*GPIO_95 */
+#endif
 	MUX_VAL(CP(CAM_XCLKA), (IDIS | PTD | DIS | M0)); /*CAM_XCLKA*/
 	MUX_VAL(CP(CAM_PCLK), (IEN  | PTU | EN  | M0)); /*CAM_PCLK*/
 	MUX_VAL(CP(CAM_FLD), (IDIS | PTD | DIS | M4)); /*GPIO_98*/
+#ifdef AIRCELL
+	MUX_VAL(CP(CAM_D0), (IEN  | PTU | EN | M4)); /*CAM_D0*/
+#else
 	MUX_VAL(CP(CAM_D0), (IEN  | PTD | DIS | M0)); /*CAM_D0*/
+#endif
 	MUX_VAL(CP(CAM_D1), (IEN  | PTD | DIS | M0)); /*CAM_D1*/
 	MUX_VAL(CP(CAM_D2), (IEN  | PTD | DIS | M0)); /*CAM_D2*/
 	MUX_VAL(CP(CAM_D3), (IEN  | PTD | DIS | M0)); /*CAM_D3*/
@@ -443,13 +588,24 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(CAM_D9), (IEN  | PTD | DIS | M0)); /*CAM_D9*/
 	MUX_VAL(CP(CAM_D10), (IEN  | PTD | DIS | M0)); /*CAM_D10*/
 	MUX_VAL(CP(CAM_D11), (IEN  | PTD | DIS | M0)); /*CAM_D11*/
+#ifdef AIRCELL
+	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | EN | M4)); /*CAM_XCLKB*/
+#else
 	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTD | DIS | M0)); /*CAM_XCLKB*/
+#endif
 	MUX_VAL(CP(CAM_WEN), (IEN  | PTD | DIS | M4)); /*GPIO_167*/
 	MUX_VAL(CP(CAM_STROBE), (IDIS | PTD | DIS | M0)); /*CAM_STROBE*/
+#ifdef AIRCELL
+	MUX_VAL(CP(CSI2_DX0), (IEN  | PTU | EN | M4)); /*CSI2_DX0*/
+	MUX_VAL(CP(CSI2_DY0), (IEN  | PTD | DIS | M0)); /*CSI2_DY0*/
+	MUX_VAL(CP(CSI2_DX1), (IEN  | PTU | EN | M4)); /*CSI2_DX1*/
+	MUX_VAL(CP(CSI2_DY1), (IEN  | PTD | DIS | M0)); /*CSI2_DY1*/
+#else
 	MUX_VAL(CP(CSI2_DX0), (IEN  | PTD | DIS | M0)); /*CSI2_DX0*/
 	MUX_VAL(CP(CSI2_DY0), (IEN  | PTD | DIS | M0)); /*CSI2_DY0*/
 	MUX_VAL(CP(CSI2_DX1), (IEN  | PTD | DIS | M0)); /*CSI2_DX1*/
 	MUX_VAL(CP(CSI2_DY1), (IEN  | PTD | DIS | M0)); /*CSI2_DY1*/
+#endif
 	/*Audio Interface */
 	MUX_VAL(CP(MCBSP2_FSX), (IEN  | PTD | DIS | M0)); /*McBSP2_FSX*/
 	MUX_VAL(CP(MCBSP2_CLKX), (IEN  | PTD | DIS | M0)); /*McBSP2_CLKX*/
@@ -462,10 +618,18 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MMC1_DAT1), (IEN  | PTU | EN  | M0)); /*MMC1_DAT1*/
 	MUX_VAL(CP(MMC1_DAT2), (IEN  | PTU | EN  | M0)); /*MMC1_DAT2*/
 	MUX_VAL(CP(MMC1_DAT3), (IEN  | PTU | EN  | M0)); /*MMC1_DAT3*/
+#ifdef AIRCELL
+	MUX_VAL(CP(MMC1_DAT4), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT4*/
+	MUX_VAL(CP(MMC1_DAT5), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT5*/
+	MUX_VAL(CP(MMC1_DAT6), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT6*/
+	MUX_VAL(CP(MMC1_DAT7), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT7*/
+#else
 	MUX_VAL(CP(MMC1_DAT4), (IEN  | PTU | EN  | M0)); /*MMC1_DAT4*/
 	MUX_VAL(CP(MMC1_DAT5), (IEN  | PTU | EN  | M0)); /*MMC1_DAT5*/
 	MUX_VAL(CP(MMC1_DAT6), (IEN  | PTU | EN  | M0)); /*MMC1_DAT6*/
 	MUX_VAL(CP(MMC1_DAT7), (IEN  | PTU | EN  | M0)); /*MMC1_DAT7*/
+#endif
+
 	/*Wireless LAN */
 #if 1
 	/* HSUSB0_DATA1/2, not GPIO_130 */
@@ -474,7 +638,12 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MMC2_CMD), (IEN  | PTU | EN  | M4)); /*GPIO_131*/
 #endif
 #if 1
+#ifdef AIRCELL
 	/* SDMMC2_DAT0-3 */
+	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | EN  | M4)); /*GPIO_134*/
+#else
+	MUX_VAL(CP(MMC2_DAT2), (IEN | PTU | EN  | M7)); /*GPIO_134*/
+#endif
 #else
 	MUX_VAL(CP(MMC2_DAT0), (IEN  | PTU | EN  | M4)); /*GPIO_132*/
 	MUX_VAL(CP(MMC2_DAT1), (IEN  | PTU | EN  | M4)); /*GPIO_133*/
@@ -510,8 +679,13 @@ void set_muxconf_regs(void)
 	/*Modem Interface */
 #if 1
 	MUX_VAL(CP(UART1_TX), (IDIS | PTD | DIS | M0)); /*UART1_TX*/
-	MUX_VAL(CP(UART1_RTS), (IDIS | PTD | DIS | M0)); /*UART1_RTS*/
-	MUX_VAL(CP(UART1_CTS), (IEN  | PTU | EN  | M0)); /*UART1_CTS*/
+#ifdef AIRCELL
+	MUX_VAL(CP(UART1_RTS), (IDIS | PTU | DIS | M4)); /*GPIO_149*/
+	MUX_VAL(CP(UART1_CTS), (IDIS | PTU | DIS | M4)); /*GPIO_150*/
+#else
+	MUX_VAL(CP(UART1_RTS), (IEN | PTU | EN | M7)); /*GPIO_149*/
+	MUX_VAL(CP(UART1_CTS), (IEN | PTU | EN | M7)); /*GPIO_150*/
+#endif
 	MUX_VAL(CP(UART1_RX), (IEN  | PTD | DIS | M0)); /*UART1_RX*/
 #else
 	MUX_VAL(CP(UART1_TX), (IDIS | PTD | DIS | M0)); /*UART1_TX*/
@@ -523,16 +697,29 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MCBSP4_DR), (IEN  | PTD | DIS | M1)); /*SSI1_FLAG_RX*/
 	MUX_VAL(CP(MCBSP4_DX), (IEN  | PTD | DIS | M1)); /*SSI1_RDY_RX*/
 	MUX_VAL(CP(MCBSP4_FSX), (IEN  | PTD | DIS | M1)); /*SSI1_WAKE*/
+#ifdef AIRCELL
+	MUX_VAL(CP(MCBSP1_CLKR), (IDIS | PTU | EN | M4)); /*GPIO_156*/
+#else
 	MUX_VAL(CP(MCBSP1_CLKR), (IDIS | PTD | DIS | M4)); /*GPIO_156*/
+#endif
 	MUX_VAL(CP(MCBSP1_FSR), (IDIS | PTU | EN  | M4)); /*GPIO_157*/
 	MUX_VAL(CP(MCBSP1_DX), (IDIS | PTD | DIS | M4)); /*GPIO_158*/
-	MUX_VAL(CP(MCBSP1_DR), (IDIS | PTD | DIS | M4)); /*GPIO_159*/
+#ifdef AIRCELL
+	MUX_VAL(CP(MCBSP1_DR), (IDIS | PTU | EN | M4)); /*GPIO_159*/
+#else
+	MUX_VAL(CP(MCBSP1_DR), (IEN | PTU | EN | M7)); /*GPIO_159*/
+#endif
 	MUX_VAL(CP(MCBSP_CLKS), (IEN  | PTU | DIS | M0)); /*McBSP_CLKS*/
 	MUX_VAL(CP(MCBSP1_FSX), (IDIS | PTD | DIS | M4)); /*GPIO_161*/
 	MUX_VAL(CP(MCBSP1_CLKX), (IDIS | PTD | DIS | M4)); /*GPIO_162*/
 	/*Serial Interface*/
+#ifdef AIRCELL
+	MUX_VAL(CP(UART3_CTS_RCTX), (IEN  | PTU | DIS  | M4)); /*UART3_CTS_RCTX*/
+	MUX_VAL(CP(UART3_RTS_SD), (IEN | PTU | DIS | M4)); /*UART3_RTS_SD */
+#else
 	MUX_VAL(CP(UART3_CTS_RCTX), (IEN  | PTD | EN  | M0)); /*UART3_CTS_RCTX*/
 	MUX_VAL(CP(UART3_RTS_SD), (IDIS | PTD | DIS | M0)); /*UART3_RTS_SD */
+#endif
 	MUX_VAL(CP(UART3_RX_IRRX), (IEN  | PTD | DIS | M0)); /*UART3_RX_IRRX*/
 	MUX_VAL(CP(UART3_TX_IRTX), (IDIS | PTD | DIS | M0)); /*UART3_TX_IRTX*/
 	MUX_VAL(CP(HSUSB0_CLK), (IEN  | PTD | DIS | M0)); /*HSUSB0_CLK*/
@@ -602,7 +789,7 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(SYS_32K), (IEN  | PTD | DIS | M0)); /*SYS_32K*/
 	MUX_VAL(CP(SYS_CLKREQ), (IEN  | PTD | DIS | M0)); /*SYS_CLKREQ*/
 	MUX_VAL(CP(SYS_NIRQ), (IEN  | PTU | EN  | M0)); /*SYS_nIRQ*/
-	MUX_VAL(CP(SYS_BOOT0), (IEN  | PTD | DIS | M4)); /*GPIO_2*/
+	MUX_VAL(CP(SYS_BOOT0), (IEN  | PTU | EN | M4)); /*GPIO_2*/
 	MUX_VAL(CP(SYS_BOOT1), (IEN  | PTD | DIS | M4)); /*GPIO_3*/
 	MUX_VAL(CP(SYS_BOOT2), (IEN  | PTD | DIS | M4)); /*GPIO_4 - MMC1_WP*/
 	MUX_VAL(CP(SYS_BOOT3), (IEN  | PTD | DIS | M4)); /*GPIO_5*/
@@ -611,7 +798,12 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(SYS_BOOT6), (IDIS | PTD | DIS | M4)); /*GPIO_8*/ 
 	MUX_VAL(CP(SYS_OFF_MODE), (IEN  | PTD | DIS | M0)); /*SYS_OFF_MODE*/
 	MUX_VAL(CP(SYS_CLKOUT1), (IEN  | PTD | DIS | M0)); /*SYS_CLKOUT1*/
+#ifdef AIRCELL
+	MUX_VAL(CP(SYS_CLKOUT2), (IDIS  | PTU | EN  | M4)); /*GPIO_186*/
+	MUX_VAL(CP(JTAG_EMU1), (IDIS  | PTD | EN  | M4)); /*JTAG_EMU1*/
+#else
 	MUX_VAL(CP(SYS_CLKOUT2), (IEN  | PTU | EN  | M4)); /*GPIO_186*/
+#endif
 	MUX_VAL(CP(ETK_CLK_ES2), (IDIS | PTU | EN  | M3)); /*HSUSB1_STP*/
 	MUX_VAL(CP(ETK_CTL_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB1_CLK*/
 	MUX_VAL(CP(ETK_D0_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA0*/
