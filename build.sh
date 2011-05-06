@@ -1,17 +1,17 @@
 #!/bin/bash -eu
 # Build u-boot
 
+make="make -j4"
 target=u-boot.bin
 
 workspace=$PWD/..
-PATH=/usr/lib/jvm/java-1.5.0-sun/bin:/usr/bin:/bin
-PATH+=:$workspace/cs-android-kernel/prebuilt/linux-x86/toolchain/arm-eabi-4.4.0/bin
+source ~/.bash-android
 
 # exec &> $0.OUT
 
 # Preconfigure
 if [ ! -e include/config.mk ]; then
-  make omap3_logic_config
+  $make omap3_logic_config
 fi
 
 # Erase existing binary
@@ -20,7 +20,7 @@ if [ -e $target ]; then
 fi
 
 # Build
-make CROSS_COMPILE=arm-eabi- ${*:-all}
+$make CROSS_COMPILE=arm-eabi- ${*:-all}
 
 if [ $? -ne 0 ] || [ ! -e $target ]; then
   echo FAIL
