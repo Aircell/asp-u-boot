@@ -4,8 +4,9 @@
 make="make -j4"
 target=u-boot.bin
 
-workspace=$PWD/..
-source ~/.bash-android
+if [ -f ../bin/bash-android ]; then
+  source ../bin/bash-android
+fi
 
 # exec &> $0.OUT
 
@@ -26,11 +27,6 @@ if [ $? -ne 0 ] || [ ! -e $target ]; then
   echo FAIL
   exit 1
 fi
-
-## Install
-INSTALLDIR=$workspace/../install.d
-[ -d $INSTALLDIR ] || mkdir -p $INSTALLDIR
-cp $target $INSTALLDIR
 
 echo SUCCESS
 exit 0
