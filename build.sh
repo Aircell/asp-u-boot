@@ -4,9 +4,8 @@
 make="make -j4"
 target=u-boot.bin
 
-if [ -f ../bin/bash-android ]; then
-  source ../bin/bash-android
-fi
+[ -f ../bin/bash-android ] && source ../bin/bash-android
+[ -f ~/bin/.bash-android ] && source ~/bin/.bash-android
 
 # exec &> $0.OUT
 
