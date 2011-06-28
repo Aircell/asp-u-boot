@@ -1,11 +1,11 @@
 #!/bin/bash -eu
 # Build u-boot
 
+[ -f ~/.bash-android ] && source ~/.bash-android
+[ -f ../bin/bash-android ] && source ../bin/bash-android
+
 make="make -j4"
 target=u-boot.bin
-
-[ -f ../bin/bash-android ] && source ../bin/bash-android
-[ -f ~/.bash-android ] && source ~/.bash-android
 
 # exec &> $0.OUT
 
