@@ -2,7 +2,7 @@
 # Build u-boot
 
 [ -f ~/.bash-android ] && source ~/.bash-android
-[ -f ../bin/bash-android ] && source ../bin/bash-android
+[ -f $CLOUDSURFER_ROOT/bin/bash-android ] && source $CLOUDSURFER_ROOT/bin/bash-android
 
 make="make -j4"
 target=u-boot.bin
