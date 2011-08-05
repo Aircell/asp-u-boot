@@ -1,3 +1,7 @@
+/* Modified for Aircell CloudSurfer 
+ * 2011-07-20 - Tarr
+ */
+
 /*
  * (C) Copyright 2009
  * Logic Product Development, <www.logicpd.com>
@@ -193,9 +197,8 @@
 /* Environment information */
 #define CONFIG_BOOTDELAY		5
 
-#if 1
 #define CONFIG_EXTRA_ENV_SETTINGS					\
-	"display=15\0"							\
+	"display=16\0"							\
 	"loadaddr=0x81000000\0"						\
 	"rootfsaddr=0x81300000\0"					\
 	"consoledev=ttyS0\0"						\
@@ -210,69 +213,18 @@
 	"rootfstype=yaffs\0"						\
 	"mtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};bootm ${loadaddr}\0" \
 	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmc init;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
-	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
+	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
+	"tboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
-#define CONFIG_BOOTCOMMAND "run androidboot"
-
-#else
-
-// Beagle ENV_SETTINGS
-#define CONFIG_EXTRA_ENV_SETTINGS \
-	"loadaddr=0x82000000\0" \
-	"console=ttyS2,115200n8\0" \
-	"videomode=1024x768@60,vxres=1024,vyres=768\0" \
-	"videospec=omapfb:vram:2M,vram:4M\0" \
-	"mmcargs=setenv bootargs console=${console} " \
-		"video=${videospec},mode:${videomode} " \
-		"root=/dev/mmcblk0p2 rw " \
-		"rootfstype=ext3 rootwait\0" \
-	"nandargs=setenv bootargs console=${console} " \
-		"video=${videospec},mode:${videomode} " \
-		"root=/dev/mtdblock4 rw " \
-		"rootfstype=jffs2\0" \
-	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
-	"bootscript=echo Running bootscript from mmc ...; " \
-		"source ${loadaddr}\0" \
-	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
-	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
-		"bootm ${loadaddr}\0" \
-	"nandboot=echo Booting from nand ...; " \
-		"run nandargs; " \
-		"nand read ${loadaddr} 280000 400000; " \
-		"bootm ${loadaddr}\0" \
-
-// Beagle BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND \
-	"if mmc init; then " \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
-		"else " \
-			"if run loaduimage; then " \
-				"run mmcboot; " \
-			"else run nandboot; " \
-			"fi; " \
-		"fi; " \
-	"else run nandboot; fi"
-#endif
+#define CONFIG_BOOTCOMMAND "run tboot"
 
 #define CONFIG_PREBOOT \
 	"echo ======================NOTICE============================;"    \
-	"echo This is the first time that you boot up this board. You are;" \
-	"echo required to set a valid display for your LCD panel.;"	\
-	"echo Enter the display number of the LCD panel(none for no LCD panel);" \
-	"echo Pick one of:;"						\
-	"echo   2 == LQ121S1DG31     TFT SVGA    (12.1)  Sharp;"	\
-	"echo   3 == LQ036Q1DA01     TFT QVGA    (3.6)   Sharp w/ASIC;" \
-	"echo   5 == LQ064D343       TFT VGA     (6.4)   Sharp;"	\
-	"echo   7 == LQ10D368        TFT VGA     (10.4)  Sharp;"	\
-	"echo  15 == LQ043T1DG01     TFT WQVGA   (4.3)   Sharp;"	\
-	"echo MAKE SURE YOUR DISPLAY IS CORRECTLY ENTERED!;"		\
-	"askenv display 'Please enter your LCD display number:' 2;"	\
-	"printenv display;"						\
-	"setenv preboot;"						\
-	"saveenv;"
+	"echo This is the first time that you boot up this board." \
+	"printenv bootm'" \
+	"bootm;"
 
+	
 #define CONFIG_CMDLINE_EDITING		1
 #define CONFIG_AUTO_COMPLETE		1
 

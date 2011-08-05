@@ -89,8 +89,8 @@ static void gpio_i2c_config_pins(void)
 
 static void gpio_i2c_restore_pins(void)
 {
-	MUX_VAL(CP(I2C3_SCL),       (IEN  | PTU | EN  | M0)); /*I2C3_SCL*/
-	MUX_VAL(CP(I2C3_SDA),       (IEN  | PTU | EN  | M0)); /*I2C3_SDA*/
+	MUX_VAL(CP(I2C3_SCL),       (IEN  | PTU | DIS  | M0)); /*I2C3_SCL*/
+	MUX_VAL(CP(I2C3_SDA),       (IEN  | PTU | DIS  | M0)); /*I2C3_SDA*/
 }
 
 #define GPIO_I2C_GPIO_SCLK  184
