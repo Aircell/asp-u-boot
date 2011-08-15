@@ -129,7 +129,7 @@
 
 /* Tarr - WiFi Enable */
 	MUX_VAL(CP(CAM_HS), (IEN  | PTU | EN | M4)); /*CAM_HS GPIO-94 */
-/* Tarr - Camera Power Down */
+/* Tarr - 23V Enable */
 	MUX_VAL(CP(CAM_VS), (IDIS | PTU | DIS | M4));  /*CAM_VS GPIO_95 */
 
 	MUX_VAL(CP(CAM_XCLKA), (IDIS | PTD | DIS | M0)); /*CAM_XCLKA*/
@@ -175,7 +175,7 @@
 /* Tarr - Touch Screeen Enable  - Be very careful with these two as
    GPIO 126 goes to both. */
 	MUX_VAL(CP(MMC1_DAT4), (IDIS  | PTU | DIS  | M0)); /*MMC1_DAT4*/
-	MUX_VAL(CP(CAM_STROBE), (IEN | PTU | EN | M4)); /*CAM_STROBE - GPIO-126*/
+	MUX_VAL(CP(CAM_STROBE), (IEN | PTU | DIS | M4)); /*CAM_STROBE - GPIO-126*/
 
 /* Tarr - Blue enable */
 	MUX_VAL(CP(MMC1_DAT5), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT5 - GPIO-127*/

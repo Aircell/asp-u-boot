@@ -143,25 +143,25 @@ int board_init(void)
 #ifdef CLOUDSURFER_P1
 	/* Enable 5V - ON */
 	if (!omap_request_gpio(AIRCELL_5V_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_5V_ENABLE, 1);
 		omap_set_gpio_direction(AIRCELL_5V_ENABLE, 1);
+		omap_set_gpio_dataout(AIRCELL_5V_ENABLE, 1);
 	}
 	/* Enable 3.3V - OFF */
 	if (!omap_request_gpio(AIRCELL_33V_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_33V_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_33V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_33V_ENABLE, 0);
 	}
 	/* LCD Power - OFF */
 	if (!omap_request_gpio(AIRCELL_LCD_POWER_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_LCD_POWER_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_LCD_POWER_ENABLE, 0);
-	}
-	/* Backlight Enable - OFF */
-	if (!omap_request_gpio(AIRCELL_BACKLIGHT_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_BACKLIGHT_ENABLE, 0);
-		omap_set_gpio_direction(AIRCELL_BACKLIGHT_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_LCD_POWER_ENABLE, 0);
 	}
 #endif
+	/* Enable 23V - OFF */
+	if (!omap_request_gpio(AIRCELL_23V_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_23V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_23V_ENABLE, 0);
+	}
 
 	/* WiFi enable detect */
 	if (!omap_request_gpio(AIRCELL_WIFI_ENABLE_DETECT)) {
@@ -170,14 +170,14 @@ int board_init(void)
 
 	/* Enable 1.8V - ON */
 	if (!omap_request_gpio(AIRCELL_18V_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_18V_ENABLE, 1);
 		omap_set_gpio_direction(AIRCELL_18V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_18V_ENABLE, 1);
 	}
 
 	/* LCD reset - Active high */
 	if (!omap_request_gpio(AIRCELL_LCD_RESET)) {
-		omap_set_gpio_dataout(AIRCELL_LCD_RESET, 1);
 		omap_set_gpio_direction(AIRCELL_LCD_RESET, 0);
+		omap_set_gpio_dataout(AIRCELL_LCD_RESET, 1);
 	}
 
 	/* handset cradle */
@@ -187,38 +187,38 @@ int board_init(void)
 
 	/* red LED - OFF */
 	if (!omap_request_gpio(AIRCELL_RED_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_RED_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_RED_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_RED_ENABLE, 0);
 	}
 
 	/* blue LED - OFF */
 	if (!omap_request_gpio(AIRCELL_BLUE_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_BLUE_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_BLUE_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_BLUE_ENABLE, 0);
 	}
 
 	/* green LED - OFF */
 	if (!omap_request_gpio(AIRCELL_GREEN_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_GREEN_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_GREEN_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_GREEN_ENABLE, 0);
 	}
 
 	/* LED driver IC - OFF */
 	if (!omap_request_gpio(AIRCELL_LED_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_LED_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_LED_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_LED_ENABLE, 0);
 	}
 
 	/* earpiece enable - OFF */
 	if (!omap_request_gpio(AIRCELL_EARPIECE_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_EARPIECE_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_EARPIECE_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_EARPIECE_ENABLE, 0);
 	}
 
 	/* ringer audio enable - OFF  */
 	if (!omap_request_gpio(AIRCELL_RINGER_ENABLE)) {
-		omap_set_gpio_dataout(AIRCELL_RINGER_ENABLE, 0);
 		omap_set_gpio_direction(AIRCELL_RINGER_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_RINGER_ENABLE, 0);
 	}
 
 	/* volume up switch */
@@ -238,8 +238,8 @@ int board_init(void)
 
 	/* touch panel reset active low - In reset */
 	if (!omap_request_gpio(AIRCELL_TOUCH_RESET)) {
-		omap_set_gpio_dataout(AIRCELL_TOUCH_RESET, 0);
 		omap_set_gpio_direction(AIRCELL_TOUCH_RESET, 0);
+		omap_set_gpio_dataout(AIRCELL_TOUCH_RESET, 0);
 	}
 
 	/* Touch screen interrupt */
@@ -257,12 +257,13 @@ int board_init(void)
 		omap_set_gpio_direction(AIRCELL_ACCEL_INTERRUPT, 1);
 	}
 
+#ifdef CLOUDSURFER_P2
 	/* Camera Power Down - Active High is power down */
 	if (!omap_request_gpio(AIRCELL_CAMERA_PWDN)) {
-		omap_set_gpio_dataout(AIRCELL_CAMERA_PWDN, 1);
 		omap_set_gpio_direction(AIRCELL_CAMERA_PWDN, 0);
+		omap_set_gpio_dataout(AIRCELL_CAMERA_PWDN, 1);
 	}
-
+#endif
 
 	/* board id for Linux (placeholder until can ID board) */
 	gd->bd->bi_arch_number = logic_identify();
@@ -312,9 +313,8 @@ void init_vaux1_voltage(void)
 int misc_init_r(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
-    struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
+    struct gpio *gpio3_base = (struct gpio *)OMAP34XX_GPIO3_BASE;
     struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
@@ -342,6 +342,8 @@ int misc_init_r(void)
 	/* Set I2C 2 pins to 1 */
 
     /* Configure and set the GPIOs */
+	writel(~(GPIO31) , &gpio3_base->oe);
+	writel(0,&gpio3_base->setdataout);
     writel(~(GPIO23 | GPIO10 | GPIO8), &gpio6_base->oe);
     writel( GPIO23 | GPIO10 | GPIO8 , &gpio6_base->setdataout);
 
