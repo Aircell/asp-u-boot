@@ -1,4 +1,12 @@
 /*
+ * Aircell - 2011
+ *
+ * Tarr - July 2011 
+ * Original stripped to only that which is required for 
+ * Aircell products that utilize the LogicPD SOM_LV
+ */
+
+/*
  * (C) Copyright 2009
  * Logic Product Development, <www.logicpd.com>
  *
@@ -40,21 +48,27 @@
 #include "logic.h"
 #include "product_id.h"
 #include <nand.h>
+#include "aircell_gpio.h"
 
+#define ID_CHECK_GPIO	189
 #define MUX_LOGIC_HSUSB0_D5_GPIO_MUX()					\
  MUX_VAL(CP(HSUSB0_DATA5),	(IEN  | PTD | DIS | M4)) /*GPIO_189*/
 
 #define MUX_LOGIC_HSUSB0_D5_DATA5()					\
  MUX_VAL(CP(HSUSB0_DATA5),	(IEN  | PTD | DIS | M0)) /*HSUSB0_DATA5*/
-
-// mark.chung
-#define AIRCELL
+/*
+ *local function prototypes *
+ */
+static void setup_nand_settings(void);
 
 /*
  * Routine: logic_identify
- * Description: Detect if we are running on a Logic or Torpedo.
+ * Description: Detect if we are running on a LV_SOM or Torpedo.
  *              This can be done by GPIO_189. If its low after driving it high,
- *              then its an LOGIC, else Torpedo.
+ *              then its an LV_SOM, else Torpedo.
+ * Tarr - This is sneeky. The pin is a part of the USB0 Data Bus between the
+ *        OMAP and the TSP65950. The Torpedo has a pull down resister attached
+ *		  to the pin....
  */
 unsigned int logic_identify(void)
 {
@@ -63,20 +77,21 @@ unsigned int logic_identify(void)
 
 	MUX_LOGIC_HSUSB0_D5_GPIO_MUX();
 
-	if (!omap_request_gpio(189)) {
+	if (!omap_request_gpio(ID_CHECK_GPIO)) {
 
-		omap_set_gpio_direction(189, 0);
-		omap_set_gpio_dataout(189, 1);
+		omap_set_gpio_direction(ID_CHECK_GPIO, 0);
+		omap_set_gpio_dataout(ID_CHECK_GPIO, 1);
 
 		// Let it soak for a bit
 		for (i=0; i<0x100; ++i)
 			asm("nop");
 
-		omap_set_gpio_direction(189, 1);
-		val = omap_get_gpio_datain(189);
-		omap_free_gpio(189);
+		omap_set_gpio_direction(ID_CHECK_GPIO, 1);
+		val = omap_get_gpio_datain(ID_CHECK_GPIO);
+		omap_free_gpio(ID_CHECK_GPIO);
 
 		if (val) {
+			printf("Wrong SOM in use!\n");
 			val = MACH_TYPE_OMAP3_TORPEDO;
 		} else {
 			val = MACH_TYPE_OMAP3530_LV_SOM;
@@ -87,61 +102,12 @@ unsigned int logic_identify(void)
 	return val;
 }
 
-
-#define LOGIC_NAND_GPMC_CONFIG1	0x00001800
-#define LOGIC_NAND_GPMC_CONFIG2	0x00090900
-#define LOGIC_NAND_GPMC_CONFIG3	0x00090902
-#define LOGIC_NAND_GPMC_CONFIG4	0x07020702
-#define LOGIC_NAND_GPMC_CONFIG5	0x00080909
-#define LOGIC_NAND_GPMC_CONFIG6	0x000002CF
-#define LOGIC_NAND_GPMC_CONFIG7	0x00000C70
-
-static void setup_nand_settings(void)
-{
-	/* Configure GPMC registers */
-	writel(0x00000000, &gpmc_cfg->cs[0].config7);
-	sdelay(1000);
-	writel(LOGIC_NAND_GPMC_CONFIG1, &gpmc_cfg->cs[0].config1);
-	writel(LOGIC_NAND_GPMC_CONFIG2, &gpmc_cfg->cs[0].config2);
-	writel(LOGIC_NAND_GPMC_CONFIG3, &gpmc_cfg->cs[0].config3);
-	writel(LOGIC_NAND_GPMC_CONFIG4, &gpmc_cfg->cs[0].config4);
-	writel(LOGIC_NAND_GPMC_CONFIG5, &gpmc_cfg->cs[0].config5);
-	writel(LOGIC_NAND_GPMC_CONFIG6, &gpmc_cfg->cs[0].config6);
-	writel(LOGIC_NAND_GPMC_CONFIG7, &gpmc_cfg->cs[0].config7);
-	sdelay(2000);
-}
-
-#define LOGIC_CF_GPMC_CONFIG1	0x00001210
-#define LOGIC_CF_GPMC_CONFIG2	0x00131000
-#define LOGIC_CF_GPMC_CONFIG3	0x001f1f01
-#define LOGIC_CF_GPMC_CONFIG4	0x10030e03
-#define LOGIC_CF_GPMC_CONFIG5	0x010f1411
-#define LOGIC_CF_GPMC_CONFIG6	0x80030600
-#define LOGIC_CF_GPMC_CONFIG7	0x00000f58
-
-static void setup_cf_gpmc_setup(void)
-{
-	/* Configure GPMC registers */
-	writel(0x00000000, &gpmc_cfg->cs[3].config7);
-	sdelay(1000);
-	writel(LOGIC_CF_GPMC_CONFIG1, &gpmc_cfg->cs[3].config1);
-	writel(LOGIC_CF_GPMC_CONFIG2, &gpmc_cfg->cs[3].config2);
-	writel(LOGIC_CF_GPMC_CONFIG3, &gpmc_cfg->cs[3].config3);
-	writel(LOGIC_CF_GPMC_CONFIG4, &gpmc_cfg->cs[3].config4);
-	writel(LOGIC_CF_GPMC_CONFIG5, &gpmc_cfg->cs[3].config5);
-	writel(LOGIC_CF_GPMC_CONFIG6, &gpmc_cfg->cs[3].config6);
-	writel(LOGIC_CF_GPMC_CONFIG7, &gpmc_cfg->cs[3].config7);
-	sdelay(2000);
-}
-
 /*
  * Routine: board_init
  * Description: Early hardware init.
  */
 int board_init(void)
 {
-	int c = 0; // mark.chung
-
 	DECLARE_GLOBAL_DATA_PTR;
 
 	gpmc_init(); /* in SRAM or SDRAM, finish GPMC */
@@ -153,133 +119,150 @@ int board_init(void)
 	/* Update NAND settings */
 	setup_nand_settings();
 
-	/* Enable LDO's for Aircell Cloudsurfer */
-#ifdef AIRCELL
-	/* jtag_emu1 for master reset */
-	if (!omap_request_gpio(31)) {
-		omap_set_gpio_dataout(31, 1);
-		omap_set_gpio_direction(31, 0);
+	/* Setup some of the GPIO pins..... */
+	/* Software reset */
+	if (!omap_request_gpio(AIRCELL_SOFTWARE_RESET)) {
+		omap_set_gpio_dataout(AIRCELL_SOFTWARE_RESET, 1);
+		omap_set_gpio_direction(AIRCELL_SOFTWARE_RESET, 0);
 	}
 
-	/* MCBSP1_DR J1:154 */
-	if (!omap_request_gpio(159)) {
-		omap_set_gpio_direction(159, 0);
-		omap_set_gpio_dataout(159, 1);
+#ifdef CLOUDSURFER_P2
+	/* Enable 5V Analog - OFF */
+	if (!omap_request_gpio(AIRCELL_5VA_ENABLE)) {
+		omap_set_gpio_dataout(AIRCELL_5VA_ENABLE, 0);
+		omap_set_gpio_direction(AIRCELL_5VA_ENABLE, 0);
 	}
 
-	/* CAM_VS J2:131 */
-	if (!omap_request_gpio(95)) {
-		omap_set_gpio_direction(95, 0);
-		omap_set_gpio_dataout(95, 1);
+	/* Enable 5V Digital - OFF */
+	if (!omap_request_gpio(AIRCELL_5VD_ENABLE)) {
+		omap_set_gpio_dataout(AIRCELL_5VD_ENABLE, 0);
+		omap_set_gpio_direction(AIRCELL_5VD_ENABLE, 0);
 	}
-
-	/* UARTA_CTS J1:162 */
-	if (!omap_request_gpio(150)) {
-		omap_set_gpio_direction(150, 0);
-		omap_set_gpio_dataout(150, 1);
-	}
-
-	/* UARTA_RTS J1:164 */
-	if (!omap_request_gpio(149)) {
-		omap_set_gpio_direction(149, 0);
-		omap_set_gpio_dataout(149, 1);
-	}
-
-	/* MMC2_DAT2 J1:220 */
-	if (!omap_request_gpio(134)) {
-		omap_set_gpio_direction(134, 0);
-		omap_set_gpio_dataout(134, 1);
-	}
-
-	/* cam_xclkb for LCD reset */
-	if (!omap_request_gpio(111)) {
-		omap_set_gpio_direction(111, 0);
-		omap_set_gpio_dataout(111, 1);
-	}
-
-	/* cam_hs for the power cut */
-	if (!omap_request_gpio(94)) {
-		omap_set_gpio_direction(94, 0);
-		omap_set_gpio_dataout(94, 0);
-	}
-
-	/* cam_d0 for handset cradle */
-	if (!omap_request_gpio(99)) {
-		omap_set_gpio_direction(99, 1);
-		omap_set_gpio_dataout(99, 0);
-	}
-
-	/* sdmmc1_dat6 for red LED */
-	if (!omap_request_gpio(128)) {
-		omap_set_gpio_direction(128, 0);
-		omap_set_gpio_dataout(128, 1);
-	}
-
-	/* mcbsp1_clkr for green LED */
-	if (!omap_request_gpio(156)) {
-		omap_set_gpio_direction(156, 0);
-		omap_set_gpio_dataout(156, 1);
-	}
-
-	/* sdmmc1_dat5 for blue LED */
-	if (!omap_request_gpio(127)) {
-		omap_set_gpio_direction(127, 0);
-		omap_set_gpio_dataout(127, 1);
-	}
-
-	/* sys_clkout2 for LED driver IC */
-	if (!omap_request_gpio(186)) {
-		omap_set_gpio_direction(186, 0);
-		omap_set_gpio_dataout(186, 1);
-	}
-
-	/* sdmmc1_dat4 for enabling the earpiece audio */
-	if (!omap_request_gpio(126)) {
-		omap_set_gpio_direction(126, 0);
-		omap_set_gpio_dataout(126, 1);
-	}
-
-	/* sdmmc1_dat7 for enabling the ringer audio */
-	if (!omap_request_gpio(129)) {
-		omap_set_gpio_direction(129, 0);
-		omap_set_gpio_dataout(129, 1);
-	}
-
-	/* uart3_cts_rctx for volume up switch */
-	if (!omap_request_gpio(163)) {
-		omap_set_gpio_direction(163, 1);
-		omap_set_gpio_dataout(163, 0);
-	}
-
-	/* uart3_rts_sd for detecting the headset plugin */
-	if (!omap_request_gpio(164)) {
-		omap_set_gpio_direction(164, 1);
-		omap_set_gpio_dataout(164, 0);
-	}
-
-	/* csi2_dx0 for volume down switch */
-	if (!omap_request_gpio(112)) {
-		omap_set_gpio_direction(112, 1);
-		omap_set_gpio_dataout(112, 0);
-	}
-
-	/* csi2_dx1 for wifi radio on/off */
-	if (!omap_request_gpio(114)) {
-		omap_set_gpio_direction(114, 1);
-		omap_set_gpio_dataout(114, 1);
-	}
-
-	/* gpmc_nbe1 for touch panel reset */
-	if (!omap_request_gpio(61)) {
-		omap_set_gpio_direction(61, 0);
-		omap_set_gpio_dataout(61, 1);
-	}
-
 #endif
 
-#if 0
-	/* Update CF settings */
-	setup_cf_gpmc_setup();
+#ifdef CLOUDSURFER_P1
+	/* Enable 5V - ON */
+	if (!omap_request_gpio(AIRCELL_5V_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_5V_ENABLE, 1);
+		omap_set_gpio_dataout(AIRCELL_5V_ENABLE, 1);
+	}
+	/* Enable 3.3V - OFF */
+	if (!omap_request_gpio(AIRCELL_33V_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_33V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_33V_ENABLE, 0);
+	}
+	/* LCD Power - OFF */
+	if (!omap_request_gpio(AIRCELL_LCD_POWER_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_LCD_POWER_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_LCD_POWER_ENABLE, 0);
+	}
+	/* Enable 23V - OFF */
+	if (!omap_request_gpio(AIRCELL_23V_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_23V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_23V_ENABLE, 0);
+	}
+#endif
+
+	/* WiFi enable detect */
+	if (!omap_request_gpio(AIRCELL_WIFI_ENABLE_DETECT)) {
+		omap_set_gpio_direction(AIRCELL_WIFI_ENABLE_DETECT, 1);
+	}
+
+	/* Enable 1.8V - ON */
+	if (!omap_request_gpio(AIRCELL_18V_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_18V_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_18V_ENABLE, 1);
+	}
+
+	/* LCD reset - Active high */
+	if (!omap_request_gpio(AIRCELL_LCD_RESET)) {
+		omap_set_gpio_direction(AIRCELL_LCD_RESET, 0);
+		omap_set_gpio_dataout(AIRCELL_LCD_RESET, 1);
+	}
+
+	/* handset cradle */
+	if (!omap_request_gpio(AIRCELL_CRADLE_DETECT)) {
+		omap_set_gpio_direction(AIRCELL_CRADLE_DETECT, 1);
+	}
+
+	/* red LED - OFF */
+	if (!omap_request_gpio(AIRCELL_RED_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_RED_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_RED_ENABLE, 0);
+	}
+
+	/* blue LED - OFF */
+	if (!omap_request_gpio(AIRCELL_BLUE_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_BLUE_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_BLUE_ENABLE, 0);
+	}
+
+	/* green LED - OFF */
+	if (!omap_request_gpio(AIRCELL_GREEN_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_GREEN_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_GREEN_ENABLE, 0);
+	}
+
+	/* LED driver IC - OFF */
+	if (!omap_request_gpio(AIRCELL_LED_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_LED_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_LED_ENABLE, 0);
+	}
+
+	/* earpiece enable - OFF */
+	if (!omap_request_gpio(AIRCELL_EARPIECE_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_EARPIECE_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_EARPIECE_ENABLE, 0);
+	}
+
+	/* ringer audio enable - OFF  */
+	if (!omap_request_gpio(AIRCELL_RINGER_ENABLE)) {
+		omap_set_gpio_direction(AIRCELL_RINGER_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_RINGER_ENABLE, 0);
+	}
+
+	/* volume up switch */
+	if (!omap_request_gpio(AIRCELL_VOLUME_UP_DETECT)) {
+		omap_set_gpio_direction(AIRCELL_VOLUME_UP_DETECT, 1);
+	}
+
+	/* headset detection */
+	if (!omap_request_gpio(AIRCELL_HANDSET_DETECT)) {
+		omap_set_gpio_direction(AIRCELL_HANDSET_DETECT, 1);
+	}
+
+	/* volume down switch */
+	if (!omap_request_gpio(AIRCELL_VOLUME_DOWN_DETECT)) {
+		omap_set_gpio_direction(AIRCELL_VOLUME_DOWN_DETECT, 1);
+	}
+
+	/* touch panel reset active low - In reset */
+	if (!omap_request_gpio(AIRCELL_TOUCH_RESET)) {
+		omap_set_gpio_direction(AIRCELL_TOUCH_RESET, 0);
+		omap_set_gpio_dataout(AIRCELL_TOUCH_RESET, 0);
+	}
+
+	/* Touch screen interrupt */
+	if (!omap_request_gpio(AIRCELL_TOUCH_INTERRUPT)) {
+		omap_set_gpio_direction(AIRCELL_TOUCH_INTERRUPT, 1);
+	}
+
+	/* Proximity interrupt */
+	if (!omap_request_gpio(AIRCELL_PROX_INTERRUPT)) {
+		omap_set_gpio_direction(AIRCELL_PROX_INTERRUPT, 1);
+	}
+
+	/* Accelerometer interrupt */
+	if (!omap_request_gpio(AIRCELL_ACCEL_INTERRUPT)) {
+		omap_set_gpio_direction(AIRCELL_ACCEL_INTERRUPT, 1);
+	}
+
+#ifdef CLOUDSURFER_P2
+	/* Camera Power Down - Active High is power down */
+	if (!omap_request_gpio(AIRCELL_CAMERA_PWDN)) {
+		omap_set_gpio_direction(AIRCELL_CAMERA_PWDN, 0);
+		omap_set_gpio_dataout(AIRCELL_CAMERA_PWDN, 1);
+	}
 #endif
 
 	/* board id for Linux (placeholder until can ID board) */
@@ -292,7 +275,6 @@ int board_init(void)
 }
 
 static void setup_net_chip(void);
-static void setup_isp1760_chip(void);
 static void fix_flash_sync(void);
 
 /* Turn on VAUX1 voltage to 3.0 volts to drive level shifters and
@@ -301,7 +283,6 @@ static void fix_flash_sync(void);
 
 void init_vaux1_voltage(void)
 {
-#ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	unsigned char data;
 	unsigned short msg;
 
@@ -323,17 +304,6 @@ void init_vaux1_voltage(void)
 	// Send message LSB
 	data = msg & 0xff;
 	i2c_write(TWL4030_CHIP_PM_MASTER, 0x4c, 1, &data, 1);
-#endif
-}
-
-static void enable_charger()
-{
-	u8 val;
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, val, TWL4030_PM_MASTER_BOOT_BCI);
-	val |= 0x37;
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, val, TWL4030_PM_MASTER_BOOT_BCI);
-
-	puts("Charger enabled\n");
 }
 
 /*
@@ -343,50 +313,41 @@ static void enable_charger()
 int misc_init_r(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
+    struct gpio *gpio3_base = (struct gpio *)OMAP34XX_GPIO3_BASE;
+    struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
-	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
-	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-
-#ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-#endif
-//	enable_charger();
 
 	/* Turn on vaux1 to make sure voltage is to the product ID chip.
 	 * Extract production data from ID chip, used to selectively
 	 * initialize portions of the system */
 	init_vaux1_voltage();
 
-	printf("Board: ");
-	if (gd->bd->bi_arch_number == MACH_TYPE_OMAP3_TORPEDO) {
-		printf("Torpedo\n");
-	} else {
-		printf("LV_SOM\n");
-	}
+	printf("Board: CloudSurfer ");
+#ifdef CLOUDSURFER_P1
+	printf("P1\n");
+#else
+	printf("P2\n");
+#endif
 
 	fetch_production_data();
 
 	twl4030_power_init();
 
-#if defined(CONFIG_CMD_NET)
 	setup_net_chip();
-#endif
-
-	/* Setup access to the isp1760 chip on CS6 */
-	setup_isp1760_chip();
 
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 
-	/* Configure GPIOs to output */
-	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
-	writel(~(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
-		GPIO15 | GPIO14 | GPIO13 | GPIO12), &gpio5_base->oe);
+    /* Set LCD SPI CS0 to 1 */
+	/* Set I2C 2 pins to 1 */
 
-	/* Set GPIOs */
-	writel(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1,
-		&gpio6_base->setdataout);
-	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
-		GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
+    /* Configure and set the GPIOs */
+#ifdef CLOUDSURFER_P1
+	writel(~(GPIO31) , &gpio3_base->oe);
+	writel(0,&gpio3_base->setdataout);
+#endif
+    writel(~(GPIO23 | GPIO10 | GPIO8), &gpio6_base->oe);
+    writel( GPIO23 | GPIO10 | GPIO8 , &gpio6_base->setdataout);
 
 	/* Fix the flash sync */
 	fix_flash_sync();
@@ -426,465 +387,42 @@ int board_late_init(void)
 /*
  * Routine: set_muxconf_regs
  * Description: Setting up the configuration Mux registers specific to the
- *		hardware. Many pins need to be moved from protect to primary
+ *		this particular board. Note, X-loader takes care of the SDRAM,
+ *		
  *		mode.
  */
 void set_muxconf_regs(void)
 {
-	/*
-	 * IEN  - Input Enable
-	 * IDIS - Input Disable
-	 * PTD  - Pull type Down
-	 * PTU  - Pull type Up
-	 * DIS  - Pull type selection is inactive
-	 * EN   - Pull type selection is active
-	 * M0   - Mode 0
-	 * The commented string gives the final mux configuration for that pin
-	 */
-
-	/*SDRC*/
-	MUX_VAL(CP(SDRC_D0), (IEN  | PTD | DIS | M0)); /*SDRC_D0*/
-	MUX_VAL(CP(SDRC_D1), (IEN  | PTD | DIS | M0)); /*SDRC_D1*/
-	MUX_VAL(CP(SDRC_D2), (IEN  | PTD | DIS | M0)); /*SDRC_D2*/
-	MUX_VAL(CP(SDRC_D3), (IEN  | PTD | DIS | M0)); /*SDRC_D3*/
-	MUX_VAL(CP(SDRC_D4), (IEN  | PTD | DIS | M0)); /*SDRC_D4*/
-	MUX_VAL(CP(SDRC_D5), (IEN  | PTD | DIS | M0)); /*SDRC_D5*/
-	MUX_VAL(CP(SDRC_D6), (IEN  | PTD | DIS | M0)); /*SDRC_D6*/
-	MUX_VAL(CP(SDRC_D7), (IEN  | PTD | DIS | M0)); /*SDRC_D7*/
-	MUX_VAL(CP(SDRC_D8), (IEN  | PTD | DIS | M0)); /*SDRC_D8*/
-	MUX_VAL(CP(SDRC_D9), (IEN  | PTD | DIS | M0)); /*SDRC_D9*/
-	MUX_VAL(CP(SDRC_D10), (IEN  | PTD | DIS | M0)); /*SDRC_D10*/
-	MUX_VAL(CP(SDRC_D11), (IEN  | PTD | DIS | M0)); /*SDRC_D11*/
-	MUX_VAL(CP(SDRC_D12), (IEN  | PTD | DIS | M0)); /*SDRC_D12*/
-	MUX_VAL(CP(SDRC_D13), (IEN  | PTD | DIS | M0)); /*SDRC_D13*/
-	MUX_VAL(CP(SDRC_D14), (IEN  | PTD | DIS | M0)); /*SDRC_D14*/
-	MUX_VAL(CP(SDRC_D15), (IEN  | PTD | DIS | M0)); /*SDRC_D15*/
-	MUX_VAL(CP(SDRC_D16), (IEN  | PTD | DIS | M0)); /*SDRC_D16*/
-	MUX_VAL(CP(SDRC_D17), (IEN  | PTD | DIS | M0)); /*SDRC_D17*/
-	MUX_VAL(CP(SDRC_D18), (IEN  | PTD | DIS | M0)); /*SDRC_D18*/
-	MUX_VAL(CP(SDRC_D19), (IEN  | PTD | DIS | M0)); /*SDRC_D19*/
-	MUX_VAL(CP(SDRC_D20), (IEN  | PTD | DIS | M0)); /*SDRC_D20*/
-	MUX_VAL(CP(SDRC_D21), (IEN  | PTD | DIS | M0)); /*SDRC_D21*/
-	MUX_VAL(CP(SDRC_D22), (IEN  | PTD | DIS | M0)); /*SDRC_D22*/
-	MUX_VAL(CP(SDRC_D23), (IEN  | PTD | DIS | M0)); /*SDRC_D23*/
-	MUX_VAL(CP(SDRC_D24), (IEN  | PTD | DIS | M0)); /*SDRC_D24*/
-	MUX_VAL(CP(SDRC_D25), (IEN  | PTD | DIS | M0)); /*SDRC_D25*/
-	MUX_VAL(CP(SDRC_D26), (IEN  | PTD | DIS | M0)); /*SDRC_D26*/
-	MUX_VAL(CP(SDRC_D27), (IEN  | PTD | DIS | M0)); /*SDRC_D27*/
-	MUX_VAL(CP(SDRC_D28), (IEN  | PTD | DIS | M0)); /*SDRC_D28*/
-	MUX_VAL(CP(SDRC_D29), (IEN  | PTD | DIS | M0)); /*SDRC_D29*/
-	MUX_VAL(CP(SDRC_D30), (IEN  | PTD | DIS | M0)); /*SDRC_D30*/
-	MUX_VAL(CP(SDRC_D31), (IEN  | PTD | DIS | M0)); /*SDRC_D31*/
-	MUX_VAL(CP(SDRC_CLK), (IEN  | PTD | DIS | M0)); /*SDRC_CLK*/
-	MUX_VAL(CP(SDRC_DQS0), (IEN  | PTD | DIS | M0)); /*SDRC_DQS0*/
-	MUX_VAL(CP(SDRC_DQS1), (IEN  | PTD | DIS | M0)); /*SDRC_DQS1*/
-	MUX_VAL(CP(SDRC_DQS2), (IEN  | PTD | DIS | M0)); /*SDRC_DQS2*/
-	MUX_VAL(CP(SDRC_DQS3), (IEN  | PTD | DIS | M0)); /*SDRC_DQS3*/
-	/*GPMC*/
-	MUX_VAL(CP(GPMC_A1), (IDIS | PTD | DIS | M0)); /*GPMC_A1*/
-	MUX_VAL(CP(GPMC_A2), (IDIS | PTD | DIS | M0)); /*GPMC_A2*/
-	MUX_VAL(CP(GPMC_A3), (IDIS | PTD | DIS | M0)); /*GPMC_A3*/
-	MUX_VAL(CP(GPMC_A4), (IDIS | PTD | DIS | M0)); /*GPMC_A4*/
-	MUX_VAL(CP(GPMC_A5), (IDIS | PTD | DIS | M0)); /*GPMC_A5*/
-	MUX_VAL(CP(GPMC_A6), (IDIS | PTD | DIS | M0)); /*GPMC_A6*/
-	MUX_VAL(CP(GPMC_A7), (IDIS | PTD | DIS | M0)); /*GPMC_A7*/
-	MUX_VAL(CP(GPMC_A8), (IDIS | PTD | DIS | M0)); /*GPMC_A8*/
-	MUX_VAL(CP(GPMC_A9), (IDIS | PTD | DIS | M0)); /*GPMC_A9*/
-	MUX_VAL(CP(GPMC_A10), (IDIS | PTD | DIS | M0)); /*GPMC_A10*/
-	MUX_VAL(CP(GPMC_D0), (IEN  | PTD | DIS | M0)); /*GPMC_D0*/
-	MUX_VAL(CP(GPMC_D1), (IEN  | PTD | DIS | M0)); /*GPMC_D1*/
-	MUX_VAL(CP(GPMC_D2), (IEN  | PTD | DIS | M0)); /*GPMC_D2*/
-	MUX_VAL(CP(GPMC_D3), (IEN  | PTD | DIS | M0)); /*GPMC_D3*/
-	MUX_VAL(CP(GPMC_D4), (IEN  | PTD | DIS | M0)); /*GPMC_D4*/
-	MUX_VAL(CP(GPMC_D5), (IEN  | PTD | DIS | M0)); /*GPMC_D5*/
-	MUX_VAL(CP(GPMC_D6), (IEN  | PTD | DIS | M0)); /*GPMC_D6*/
-	MUX_VAL(CP(GPMC_D7), (IEN  | PTD | DIS | M0)); /*GPMC_D7*/
-	MUX_VAL(CP(GPMC_D8), (IEN  | PTD | DIS | M0)); /*GPMC_D8*/
-	MUX_VAL(CP(GPMC_D9), (IEN  | PTD | DIS | M0)); /*GPMC_D9*/
-	MUX_VAL(CP(GPMC_D10), (IEN  | PTD | DIS | M0)); /*GPMC_D10*/
-	MUX_VAL(CP(GPMC_D11), (IEN  | PTD | DIS | M0)); /*GPMC_D11*/
-	MUX_VAL(CP(GPMC_D12), (IEN  | PTD | DIS | M0)); /*GPMC_D12*/
-	MUX_VAL(CP(GPMC_D13), (IEN  | PTD | DIS | M0)); /*GPMC_D13*/
-	MUX_VAL(CP(GPMC_D14), (IEN  | PTD | DIS | M0)); /*GPMC_D14*/
-	MUX_VAL(CP(GPMC_D15), (IEN  | PTD | DIS | M0)); /*GPMC_D15*/
-	MUX_VAL(CP(GPMC_NCS0), (IDIS | PTU | EN  | M0)); /*GPMC_nCS0*/
-	MUX_VAL(CP(GPMC_NCS1), (IDIS | PTU | EN  | M0)); /*GPMC_nCS1*/
-	MUX_VAL(CP(GPMC_NCS2), (IDIS | PTU | EN  | M0)); /*GPMC_nCS2*/
-	MUX_VAL(CP(GPMC_NCS3), (IEN  | PTD | DIS | M0)); /*GPMC_nCS3*/
-	MUX_VAL(CP(GPMC_NCS4), (IDIS | PTU | EN  | M7)); /*GPMC_nCS4*/
-	MUX_VAL(CP(GPMC_NCS5), (IDIS | PTD | DIS | M7)); /*GPMC_nCS5*/
-	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | EN  | M0)); /*GPMC_nCS6*/
-	MUX_VAL(CP(GPMC_NCS7), (IEN  | PTU | EN  | M1)); /*GPMC_IO_DIR*/
-
-#ifdef AIRCELL
-	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | EN  | M4)); /*GPMC_nBE1*/
+#ifdef CLOUDSURFER_P1
+#include "cloudsurfer_p1_mux.h"
 #else
-	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | EN  | M0)); /*GPMC_nBE1*/
+#include "cloudsurfer_p2_mux.h"
 #endif
-
-	MUX_VAL(CP(GPMC_WAIT0), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT0*/
-	MUX_VAL(CP(GPMC_WAIT1), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT1*/
-	MUX_VAL(CP(GPMC_WAIT2), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT2*/
-	MUX_VAL(CP(GPMC_WAIT3), (IEN  | PTU | EN  | M1)); /*uP_DREQ1*/
-	MUX_VAL(CP(GPMC_CLK), (IEN  | PTD | DIS | M0)); /*GPMC_CLK*/
-	MUX_VAL(CP(GPMC_NADV_ALE), (IDIS | PTD | DIS | M0)); /*GPMC_nADV_ALE*/
-	MUX_VAL(CP(GPMC_NOE), (IDIS | PTD | DIS | M0)); /*GPMC_nOE*/
-	MUX_VAL(CP(GPMC_NWE), (IDIS | PTD | DIS | M0)); /*GPMC_nWE*/
-	MUX_VAL(CP(GPMC_NWP), (IEN  | PTU | EN  | M0)); /*GPMC_nWP*/
-	MUX_VAL(CP(GPMC_NBE0_CLE), (IEN  | PTU | EN  | M0)); /*GPMC_nBE0_CLE*/
-	/*DSS*/
-	MUX_VAL(CP(DSS_PCLK), (IDIS | PTD | DIS | M0)); /*DSS_PCLK*/
-	MUX_VAL(CP(DSS_HSYNC), (IDIS | PTD | DIS | M0)); /*DSS_HSYNC*/
-	MUX_VAL(CP(DSS_VSYNC), (IDIS | PTD | DIS | M0)); /*DSS_VSYNC*/
-	MUX_VAL(CP(DSS_ACBIAS), (IDIS | PTD | DIS | M0)); /*DSS_ACBIAS*/
-	MUX_VAL(CP(DSS_DATA0), (IDIS | PTD | DIS | M0)); /*DSS_DATA0*/
-	MUX_VAL(CP(DSS_DATA1), (IDIS | PTD | DIS | M0)); /*DSS_DATA1*/
-	MUX_VAL(CP(DSS_DATA2), (IDIS | PTD | DIS | M0)); /*DSS_DATA2*/
-	MUX_VAL(CP(DSS_DATA3), (IDIS | PTD | DIS | M0)); /*DSS_DATA3*/
-	MUX_VAL(CP(DSS_DATA4), (IDIS | PTD | DIS | M0)); /*DSS_DATA4*/
-	MUX_VAL(CP(DSS_DATA5), (IDIS | PTD | DIS | M0)); /*DSS_DATA5*/
-	MUX_VAL(CP(DSS_DATA6), (IDIS | PTD | DIS | M0)); /*DSS_DATA6*/
-	MUX_VAL(CP(DSS_DATA7), (IDIS | PTD | DIS | M0)); /*DSS_DATA7*/
-	MUX_VAL(CP(DSS_DATA8), (IDIS | PTD | DIS | M0)); /*DSS_DATA8*/
-	MUX_VAL(CP(DSS_DATA9), (IDIS | PTD | DIS | M0)); /*DSS_DATA9*/
-	MUX_VAL(CP(DSS_DATA10), (IDIS | PTD | DIS | M0)); /*DSS_DATA10*/
-	MUX_VAL(CP(DSS_DATA11), (IDIS | PTD | DIS | M0)); /*DSS_DATA11*/
-	MUX_VAL(CP(DSS_DATA12), (IDIS | PTD | DIS | M0)); /*DSS_DATA12*/
-	MUX_VAL(CP(DSS_DATA13), (IDIS | PTD | DIS | M0)); /*DSS_DATA13*/
-	MUX_VAL(CP(DSS_DATA14), (IDIS | PTD | DIS | M0)); /*DSS_DATA14*/
-	MUX_VAL(CP(DSS_DATA15), (IDIS | PTD | DIS | M0)); /*DSS_DATA15*/
-	MUX_VAL(CP(DSS_DATA16), (IDIS | PTD | DIS | M0)); /*DSS_DATA16*/
-	MUX_VAL(CP(DSS_DATA17), (IDIS | PTD | DIS | M0)); /*DSS_DATA17*/
-	MUX_VAL(CP(DSS_DATA18), (IDIS | PTD | DIS | M0)); /*DSS_DATA18*/
-	MUX_VAL(CP(DSS_DATA19), (IDIS | PTD | DIS | M0)); /*DSS_DATA19*/
-	MUX_VAL(CP(DSS_DATA20), (IDIS | PTD | DIS | M0)); /*DSS_DATA20*/
-	MUX_VAL(CP(DSS_DATA21), (IDIS | PTD | DIS | M0)); /*DSS_DATA21*/
-	MUX_VAL(CP(DSS_DATA22), (IDIS | PTD | DIS | M0)); /*DSS_DATA22*/
-	MUX_VAL(CP(DSS_DATA23), (IDIS | PTD | DIS | M0)); /*DSS_DATA23*/
-	/*CAMERA*/
-#ifdef AIRCELL
-	MUX_VAL(CP(CAM_HS), (IDIS  | PTU | DIS  | M4)); /*CAM_HS */
-	MUX_VAL(CP(CAM_VS), (IDIS | PTU | DIS  | M4)); /*GPIO_95 */
-#else
-	MUX_VAL(CP(CAM_HS), (IDIS  | PTU | EN  | M0)); /*CAM_HS */
-	MUX_VAL(CP(CAM_VS), (IEN  | PTU | EN  | M7)); /*GPIO_95 */
-#endif
-	MUX_VAL(CP(CAM_XCLKA), (IDIS | PTD | DIS | M0)); /*CAM_XCLKA*/
-	MUX_VAL(CP(CAM_PCLK), (IEN  | PTU | EN  | M0)); /*CAM_PCLK*/
-	MUX_VAL(CP(CAM_FLD), (IDIS | PTD | DIS | M4)); /*GPIO_98*/
-#ifdef AIRCELL
-	MUX_VAL(CP(CAM_D0), (IEN  | PTU | EN | M4)); /*CAM_D0*/
-#else
-	MUX_VAL(CP(CAM_D0), (IEN  | PTD | DIS | M0)); /*CAM_D0*/
-#endif
-	MUX_VAL(CP(CAM_D1), (IEN  | PTD | DIS | M0)); /*CAM_D1*/
-	MUX_VAL(CP(CAM_D2), (IEN  | PTD | DIS | M0)); /*CAM_D2*/
-	MUX_VAL(CP(CAM_D3), (IEN  | PTD | DIS | M0)); /*CAM_D3*/
-	MUX_VAL(CP(CAM_D4), (IEN  | PTD | DIS | M0)); /*CAM_D4*/
-	MUX_VAL(CP(CAM_D5), (IEN  | PTD | DIS | M0)); /*CAM_D5*/
-	MUX_VAL(CP(CAM_D6), (IEN  | PTD | DIS | M0)); /*CAM_D6*/
-	MUX_VAL(CP(CAM_D7), (IEN  | PTD | DIS | M0)); /*CAM_D7*/
-	MUX_VAL(CP(CAM_D8), (IEN  | PTD | DIS | M0)); /*CAM_D8*/
-	MUX_VAL(CP(CAM_D9), (IEN  | PTD | DIS | M0)); /*CAM_D9*/
-	MUX_VAL(CP(CAM_D10), (IEN  | PTD | DIS | M0)); /*CAM_D10*/
-	MUX_VAL(CP(CAM_D11), (IEN  | PTD | DIS | M0)); /*CAM_D11*/
-#ifdef AIRCELL
-	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | EN | M4)); /*CAM_XCLKB*/
-#else
-	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTD | DIS | M0)); /*CAM_XCLKB*/
-#endif
-	MUX_VAL(CP(CAM_WEN), (IEN  | PTD | DIS | M4)); /*GPIO_167*/
-	MUX_VAL(CP(CAM_STROBE), (IDIS | PTD | DIS | M0)); /*CAM_STROBE*/
-#ifdef AIRCELL
-	MUX_VAL(CP(CSI2_DX0), (IEN  | PTU | EN | M4)); /*CSI2_DX0*/
-	MUX_VAL(CP(CSI2_DY0), (IEN  | PTD | DIS | M0)); /*CSI2_DY0*/
-	MUX_VAL(CP(CSI2_DX1), (IEN  | PTU | EN | M4)); /*CSI2_DX1*/
-	MUX_VAL(CP(CSI2_DY1), (IEN  | PTD | DIS | M0)); /*CSI2_DY1*/
-#else
-	MUX_VAL(CP(CSI2_DX0), (IEN  | PTD | DIS | M0)); /*CSI2_DX0*/
-	MUX_VAL(CP(CSI2_DY0), (IEN  | PTD | DIS | M0)); /*CSI2_DY0*/
-	MUX_VAL(CP(CSI2_DX1), (IEN  | PTD | DIS | M0)); /*CSI2_DX1*/
-	MUX_VAL(CP(CSI2_DY1), (IEN  | PTD | DIS | M0)); /*CSI2_DY1*/
-#endif
-	/*Audio Interface */
-	MUX_VAL(CP(MCBSP2_FSX), (IEN  | PTD | DIS | M0)); /*McBSP2_FSX*/
-	MUX_VAL(CP(MCBSP2_CLKX), (IEN  | PTD | DIS | M0)); /*McBSP2_CLKX*/
-	MUX_VAL(CP(MCBSP2_DR), (IEN  | PTD | DIS | M0)); /*McBSP2_DR*/
-	MUX_VAL(CP(MCBSP2_DX), (IDIS | PTD | DIS | M0)); /*McBSP2_DX*/
-	/*Expansion card */
-	MUX_VAL(CP(MMC1_CLK), (IDIS | PTU | EN  | M0)); /*MMC1_CLK*/
-	MUX_VAL(CP(MMC1_CMD), (IEN  | PTU | EN  | M0)); /*MMC1_CMD*/
-	MUX_VAL(CP(MMC1_DAT0), (IEN  | PTU | EN  | M0)); /*MMC1_DAT0*/
-	MUX_VAL(CP(MMC1_DAT1), (IEN  | PTU | EN  | M0)); /*MMC1_DAT1*/
-	MUX_VAL(CP(MMC1_DAT2), (IEN  | PTU | EN  | M0)); /*MMC1_DAT2*/
-	MUX_VAL(CP(MMC1_DAT3), (IEN  | PTU | EN  | M0)); /*MMC1_DAT3*/
-#ifdef AIRCELL
-	MUX_VAL(CP(MMC1_DAT4), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT4*/
-	MUX_VAL(CP(MMC1_DAT5), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT5*/
-	MUX_VAL(CP(MMC1_DAT6), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT6*/
-	MUX_VAL(CP(MMC1_DAT7), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT7*/
-#else
-	MUX_VAL(CP(MMC1_DAT4), (IEN  | PTU | EN  | M0)); /*MMC1_DAT4*/
-	MUX_VAL(CP(MMC1_DAT5), (IEN  | PTU | EN  | M0)); /*MMC1_DAT5*/
-	MUX_VAL(CP(MMC1_DAT6), (IEN  | PTU | EN  | M0)); /*MMC1_DAT6*/
-	MUX_VAL(CP(MMC1_DAT7), (IEN  | PTU | EN  | M0)); /*MMC1_DAT7*/
-#endif
-
-	/*Wireless LAN */
-#if 1
-	/* HSUSB0_DATA1/2, not GPIO_130 */
-#else
-	MUX_VAL(CP(MMC2_CLK), (IEN  | PTU | EN  | M4)); /*GPIO_130*/
-	MUX_VAL(CP(MMC2_CMD), (IEN  | PTU | EN  | M4)); /*GPIO_131*/
-#endif
-#if 1
-#ifdef AIRCELL
-	/* SDMMC2_DAT0-3 */
-	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | EN  | M4)); /*GPIO_134*/
-#else
-	MUX_VAL(CP(MMC2_DAT2), (IEN | PTU | EN  | M7)); /*GPIO_134*/
-#endif
-#else
-	MUX_VAL(CP(MMC2_DAT0), (IEN  | PTU | EN  | M4)); /*GPIO_132*/
-	MUX_VAL(CP(MMC2_DAT1), (IEN  | PTU | EN  | M4)); /*GPIO_133*/
-	MUX_VAL(CP(MMC2_DAT2), (IEN  | PTU | EN  | M4)); /*GPIO_134*/
-	MUX_VAL(CP(MMC2_DAT3), (IEN  | PTU | EN  | M4)); /*GPIO_135*/
-#endif
-#if 1
-	/* SDMMC3_DAT0-3 */
-#else
-	MUX_VAL(CP(MMC2_DAT4), (IEN  | PTU | EN  | M4)); /*GPIO_136*/
-	MUX_VAL(CP(MMC2_DAT5), (IEN  | PTU | EN  | M4)); /*GPIO_137*/
-	MUX_VAL(CP(MMC2_DAT6), (IEN  | PTU | EN  | M4)); /*GPIO_138*/
-	MUX_VAL(CP(MMC2_DAT7), (IEN  | PTU | EN  | M4)); /*GPIO_139*/
-#endif
-
-	/*Bluetooth*/
-#if 1
-	MUX_VAL(CP(MCBSP3_DX), (IDIS  | PTD | DIS | M0)); /*McBSP3_DX*/
-	MUX_VAL(CP(MCBSP3_DR), (IDIS | PTD | DIS | M0)); /*McBSP3_DR*/
-	MUX_VAL(CP(MCBSP3_CLKX), (IDIS | PTD | DIS | M0)); /*McBSP3_CLKX*/
-	MUX_VAL(CP(MCBSP3_FSX), (IEN  | PTD | DIS | M0)); /*McBSP3_FSX*/
-
-#else
-	MUX_VAL(CP(MCBSP3_DX), (IEN  | PTD | DIS | M1)); /*UART2_CTS*/
-	MUX_VAL(CP(MCBSP3_DR), (IDIS | PTD | DIS | M1)); /*UART2_RTS*/
-	MUX_VAL(CP(MCBSP3_CLKX), (IDIS | PTD | DIS | M1)); /*UART2_TX*/
-	MUX_VAL(CP(MCBSP3_FSX), (IEN  | PTD | DIS | M1)); /*UART2_RX*/
-	MUX_VAL(CP(UART2_CTS), (IEN  | PTD | DIS | M4)); /*GPIO_144*/
-	MUX_VAL(CP(UART2_RTS), (IEN  | PTD | DIS | M4)); /*GPIO_145*/
-	MUX_VAL(CP(UART2_TX), (IEN  | PTD | DIS | M4)); /*GPIO_146*/
-	MUX_VAL(CP(UART2_RX), (IEN  | PTD | DIS | M4)); /*GPIO_147*/
-#endif
-	/*Modem Interface */
-#if 1
-	MUX_VAL(CP(UART1_TX), (IDIS | PTD | DIS | M0)); /*UART1_TX*/
-#ifdef AIRCELL
-	MUX_VAL(CP(UART1_RTS), (IDIS | PTU | DIS | M4)); /*GPIO_149*/
-	MUX_VAL(CP(UART1_CTS), (IDIS | PTU | DIS | M4)); /*GPIO_150*/
-#else
-	MUX_VAL(CP(UART1_RTS), (IEN | PTU | EN | M7)); /*GPIO_149*/
-	MUX_VAL(CP(UART1_CTS), (IEN | PTU | EN | M7)); /*GPIO_150*/
-#endif
-	MUX_VAL(CP(UART1_RX), (IEN  | PTD | DIS | M0)); /*UART1_RX*/
-#else
-	MUX_VAL(CP(UART1_TX), (IDIS | PTD | DIS | M0)); /*UART1_TX*/
-	MUX_VAL(CP(UART1_RTS), (IDIS | PTD | DIS | M4)); /*GPIO_149*/ 
-	MUX_VAL(CP(UART1_CTS), (IDIS | PTD | DIS | M4)); /*GPIO_150*/ 
-	MUX_VAL(CP(UART1_RX), (IEN  | PTD | DIS | M0)); /*UART1_RX*/
-#endif
-	MUX_VAL(CP(MCBSP4_CLKX), (IEN  | PTD | DIS | M1)); /*SSI1_DAT_RX*/
-	MUX_VAL(CP(MCBSP4_DR), (IEN  | PTD | DIS | M1)); /*SSI1_FLAG_RX*/
-	MUX_VAL(CP(MCBSP4_DX), (IEN  | PTD | DIS | M1)); /*SSI1_RDY_RX*/
-	MUX_VAL(CP(MCBSP4_FSX), (IEN  | PTD | DIS | M1)); /*SSI1_WAKE*/
-#ifdef AIRCELL
-	MUX_VAL(CP(MCBSP1_CLKR), (IDIS | PTU | EN | M4)); /*GPIO_156*/
-#else
-	MUX_VAL(CP(MCBSP1_CLKR), (IDIS | PTD | DIS | M4)); /*GPIO_156*/
-#endif
-	MUX_VAL(CP(MCBSP1_FSR), (IDIS | PTU | EN  | M4)); /*GPIO_157*/
-	MUX_VAL(CP(MCBSP1_DX), (IDIS | PTD | DIS | M4)); /*GPIO_158*/
-#ifdef AIRCELL
-	MUX_VAL(CP(MCBSP1_DR), (IDIS | PTU | EN | M4)); /*GPIO_159*/
-#else
-	MUX_VAL(CP(MCBSP1_DR), (IEN | PTU | EN | M7)); /*GPIO_159*/
-#endif
-	MUX_VAL(CP(MCBSP_CLKS), (IEN  | PTU | DIS | M0)); /*McBSP_CLKS*/
-	MUX_VAL(CP(MCBSP1_FSX), (IDIS | PTD | DIS | M4)); /*GPIO_161*/
-	MUX_VAL(CP(MCBSP1_CLKX), (IDIS | PTD | DIS | M4)); /*GPIO_162*/
-	/*Serial Interface*/
-#ifdef AIRCELL
-	MUX_VAL(CP(UART3_CTS_RCTX), (IEN  | PTU | DIS  | M4)); /*UART3_CTS_RCTX*/
-	MUX_VAL(CP(UART3_RTS_SD), (IEN | PTU | DIS | M4)); /*UART3_RTS_SD */
-#else
-	MUX_VAL(CP(UART3_CTS_RCTX), (IEN  | PTD | EN  | M0)); /*UART3_CTS_RCTX*/
-	MUX_VAL(CP(UART3_RTS_SD), (IDIS | PTD | DIS | M0)); /*UART3_RTS_SD */
-#endif
-	MUX_VAL(CP(UART3_RX_IRRX), (IEN  | PTD | DIS | M0)); /*UART3_RX_IRRX*/
-	MUX_VAL(CP(UART3_TX_IRTX), (IDIS | PTD | DIS | M0)); /*UART3_TX_IRTX*/
-	MUX_VAL(CP(HSUSB0_CLK), (IEN  | PTD | DIS | M0)); /*HSUSB0_CLK*/
-	MUX_VAL(CP(HSUSB0_STP), (IDIS | PTU | EN  | M0)); /*HSUSB0_STP*/
-	MUX_VAL(CP(HSUSB0_DIR), (IEN  | PTD | DIS | M0)); /*HSUSB0_DIR*/
-	MUX_VAL(CP(HSUSB0_NXT), (IEN  | PTD | DIS | M0)); /*HSUSB0_NXT*/
-	MUX_VAL(CP(HSUSB0_DATA0), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA0*/
-	MUX_VAL(CP(HSUSB0_DATA1), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA1*/
-	MUX_VAL(CP(HSUSB0_DATA2), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA2*/
-	MUX_VAL(CP(HSUSB0_DATA3), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA3*/
-	MUX_VAL(CP(HSUSB0_DATA4), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA4*/
-	MUX_VAL(CP(HSUSB0_DATA5), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA5*/
-	MUX_VAL(CP(HSUSB0_DATA6), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA6*/
-	MUX_VAL(CP(HSUSB0_DATA7), (IEN  | PTD | DIS | M0)); /*HSUSB0_DATA7*/
-	MUX_VAL(CP(I2C1_SCL), (IEN  | PTU | EN  | M0)); /*I2C1_SCL*/
-	MUX_VAL(CP(I2C1_SDA), (IEN  | PTU | EN  | M0)); /*I2C1_SDA*/
-#if 1
-	MUX_VAL(CP(I2C2_SCL), (IEN  | PTU | EN  | M0)); /*I2C2_SCL*/
-	MUX_VAL(CP(I2C2_SDA), (IEN  | PTU | EN  | M0)); /*I2C2_SDA*/
-#else
-	MUX_VAL(CP(I2C2_SCL), (IEN  | PTU | EN  | M4)); /*GPIO_168*/
-	MUX_VAL(CP(I2C2_SDA), (IEN  | PTU | EN  | M4)); /*GPIO_183*/
-#endif
-	MUX_VAL(CP(I2C3_SCL), (IEN  | PTU | EN  | M0)); /*I2C3_SCL*/
-	MUX_VAL(CP(I2C3_SDA), (IEN  | PTU | EN  | M0)); /*I2C3_SDA*/
-	MUX_VAL(CP(I2C4_SCL), (IEN  | PTU | EN  | M0)); /*I2C4_SCL*/
-	MUX_VAL(CP(I2C4_SDA), (IEN  | PTU | EN  | M0)); /*I2C4_SDA*/
-#if 1
-	/* This is BATT_LINE, should it be a GPIO??? */
-	MUX_VAL(CP(HDQ_SIO), (IDIS | PTU | EN  | M4)); /*GPIO_170*/
-#else
-	MUX_VAL(CP(HDQ_SIO), (IDIS | PTU | EN  | M4)); /*GPIO_170*/
-#endif
-#if 1
-	MUX_VAL(CP(MCSPI1_CLK), (IEN  | PTD | DIS | M0)); /*McSPI1_CLK*/
-	MUX_VAL(CP(MCSPI1_SIMO), (IEN  | PTD | DIS  | M0)); /*McSPI1_SIMO*/
-	MUX_VAL(CP(MCSPI1_SOMI), (IEN  | PTD | DIS | M0)); /*McSPI1_SOMI*/
-	MUX_VAL(CP(MCSPI1_CS0), (IDIS  | PTU | EN  | M0)); /*McSPI1_CS0*/
-	MUX_VAL(CP(MCSPI1_CS1), (IDIS | PTU | EN  | M0)); /*McSPI1_CS1*/
-	MUX_VAL(CP(MCSPI1_CS2), (IDIS | PTU | EN | M0)); /*McSPI1_CS2*/
-#else
-	MUX_VAL(CP(MCSPI1_CLK), (IEN  | PTU | EN  | M4)); /*GPIO_171*/
-	MUX_VAL(CP(MCSPI1_SIMO), (IEN  | PTU | EN  | M4)); /*GPIO_172*/
-	MUX_VAL(CP(MCSPI1_SOMI), (IEN  | PTD | DIS | M0)); /*McSPI1_SOMI*/
-	MUX_VAL(CP(MCSPI1_CS0), (IEN  | PTD | EN  | M0)); /*McSPI1_CS0*/
-	MUX_VAL(CP(MCSPI1_CS1), (IDIS | PTD | EN  | M0)); /*McSPI1_CS1*/
-	MUX_VAL(CP(MCSPI1_CS2), (IDIS | PTD | DIS | M4)); /*GPIO_176*/
-#endif
-	/* USB EHCI (port 2) */
-#if 1
-	MUX_VAL(CP(MCSPI1_CS3), (IDIS  | PTU | EN | M0)); /*McSPI1_CS3*/
-#else
-	MUX_VAL(CP(MCSPI1_CS3), (IEN  | PTU | EN | M3)); /*HSUSB2_DATA2*/
-#endif
-	MUX_VAL(CP(MCSPI2_CLK), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA7*/
-	MUX_VAL(CP(MCSPI2_SIMO), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA4*/
-	MUX_VAL(CP(MCSPI2_SOMI), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA5*/
-	MUX_VAL(CP(MCSPI2_CS0), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA6*/
-	MUX_VAL(CP(MCSPI2_CS1), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA3*/
-	MUX_VAL(CP(ETK_D10_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB2_CLK*/
-	MUX_VAL(CP(ETK_D11_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB2_STP*/
-	MUX_VAL(CP(ETK_D12_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DIR*/
-	MUX_VAL(CP(ETK_D13_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_NXT*/
-	MUX_VAL(CP(ETK_D14_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA0*/
-	MUX_VAL(CP(ETK_D15_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA1*/
-	/*Control and debug */
-	MUX_VAL(CP(SYS_32K), (IEN  | PTD | DIS | M0)); /*SYS_32K*/
-	MUX_VAL(CP(SYS_CLKREQ), (IEN  | PTD | DIS | M0)); /*SYS_CLKREQ*/
-	MUX_VAL(CP(SYS_NIRQ), (IEN  | PTU | EN  | M0)); /*SYS_nIRQ*/
-	MUX_VAL(CP(SYS_BOOT0), (IEN  | PTU | EN | M4)); /*GPIO_2*/
-	MUX_VAL(CP(SYS_BOOT1), (IEN  | PTD | DIS | M4)); /*GPIO_3*/
-	MUX_VAL(CP(SYS_BOOT2), (IEN  | PTD | DIS | M4)); /*GPIO_4 - MMC1_WP*/
-	MUX_VAL(CP(SYS_BOOT3), (IEN  | PTD | DIS | M4)); /*GPIO_5*/
-	MUX_VAL(CP(SYS_BOOT4), (IEN  | PTD | DIS | M4)); /*GPIO_6*/
-	MUX_VAL(CP(SYS_BOOT5), (IEN  | PTD | DIS | M4)); /*GPIO_7*/
-	MUX_VAL(CP(SYS_BOOT6), (IDIS | PTD | DIS | M4)); /*GPIO_8*/ 
-	MUX_VAL(CP(SYS_OFF_MODE), (IEN  | PTD | DIS | M0)); /*SYS_OFF_MODE*/
-	MUX_VAL(CP(SYS_CLKOUT1), (IEN  | PTD | DIS | M0)); /*SYS_CLKOUT1*/
-#ifdef AIRCELL
-	MUX_VAL(CP(SYS_CLKOUT2), (IDIS  | PTU | EN  | M4)); /*GPIO_186*/
-	MUX_VAL(CP(JTAG_EMU1), (IDIS  | PTD | EN  | M4)); /*JTAG_EMU1*/
-#else
-	MUX_VAL(CP(SYS_CLKOUT2), (IEN  | PTU | EN  | M4)); /*GPIO_186*/
-#endif
-	MUX_VAL(CP(ETK_CLK_ES2), (IDIS | PTU | EN  | M3)); /*HSUSB1_STP*/
-	MUX_VAL(CP(ETK_CTL_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB1_CLK*/
-	MUX_VAL(CP(ETK_D0_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA0*/
-	MUX_VAL(CP(ETK_D1_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA1*/
-	MUX_VAL(CP(ETK_D2_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA2*/
-	MUX_VAL(CP(ETK_D3_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA7*/
-	MUX_VAL(CP(ETK_D4_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA4*/
-	MUX_VAL(CP(ETK_D5_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA5*/
-	MUX_VAL(CP(ETK_D6_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA6*/
-	MUX_VAL(CP(ETK_D7_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DATA3*/
-	MUX_VAL(CP(ETK_D8_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_DIR*/
-	MUX_VAL(CP(ETK_D9_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB1_NXT*/
-	MUX_VAL(CP(D2D_MCAD1), (IEN  | PTD | EN  | M0)); /*d2d_mcad1*/
-	MUX_VAL(CP(D2D_MCAD2), (IEN  | PTD | EN  | M0)); /*d2d_mcad2*/
-	MUX_VAL(CP(D2D_MCAD3), (IEN  | PTD | EN  | M0)); /*d2d_mcad3*/
-	MUX_VAL(CP(D2D_MCAD4), (IEN  | PTD | EN  | M0)); /*d2d_mcad4*/
-	MUX_VAL(CP(D2D_MCAD5), (IEN  | PTD | EN  | M0)); /*d2d_mcad5*/
-	MUX_VAL(CP(D2D_MCAD6), (IEN  | PTD | EN  | M0)); /*d2d_mcad6*/
-	MUX_VAL(CP(D2D_MCAD7), (IEN  | PTD | EN  | M0)); /*d2d_mcad7*/
-	MUX_VAL(CP(D2D_MCAD8), (IEN  | PTD | EN  | M0)); /*d2d_mcad8*/
-	MUX_VAL(CP(D2D_MCAD9), (IEN  | PTD | EN  | M0)); /*d2d_mcad9*/
-	MUX_VAL(CP(D2D_MCAD10), (IEN  | PTD | EN  | M0)); /*d2d_mcad10*/
-	MUX_VAL(CP(D2D_MCAD11), (IEN  | PTD | EN  | M0)); /*d2d_mcad11*/
-	MUX_VAL(CP(D2D_MCAD12), (IEN  | PTD | EN  | M0)); /*d2d_mcad12*/
-	MUX_VAL(CP(D2D_MCAD13), (IEN  | PTD | EN  | M0)); /*d2d_mcad13*/
-	MUX_VAL(CP(D2D_MCAD14), (IEN  | PTD | EN  | M0)); /*d2d_mcad14*/
-	MUX_VAL(CP(D2D_MCAD15), (IEN  | PTD | EN  | M0)); /*d2d_mcad15*/
-	MUX_VAL(CP(D2D_MCAD16), (IEN  | PTD | EN  | M0)); /*d2d_mcad16*/
-	MUX_VAL(CP(D2D_MCAD17), (IEN  | PTD | EN  | M0)); /*d2d_mcad17*/
-	MUX_VAL(CP(D2D_MCAD18), (IEN  | PTD | EN  | M0)); /*d2d_mcad18*/
-	MUX_VAL(CP(D2D_MCAD19), (IEN  | PTD | EN  | M0)); /*d2d_mcad19*/
-	MUX_VAL(CP(D2D_MCAD20), (IEN  | PTD | EN  | M0)); /*d2d_mcad20*/
-	MUX_VAL(CP(D2D_MCAD21), (IEN  | PTD | EN  | M0)); /*d2d_mcad21*/
-	MUX_VAL(CP(D2D_MCAD22), (IEN  | PTD | EN  | M0)); /*d2d_mcad22*/
-	MUX_VAL(CP(D2D_MCAD23), (IEN  | PTD | EN  | M0)); /*d2d_mcad23*/
-	MUX_VAL(CP(D2D_MCAD24), (IEN  | PTD | EN  | M0)); /*d2d_mcad24*/
-	MUX_VAL(CP(D2D_MCAD25), (IEN  | PTD | EN  | M0)); /*d2d_mcad25*/
-	MUX_VAL(CP(D2D_MCAD26), (IEN  | PTD | EN  | M0)); /*d2d_mcad26*/
-	MUX_VAL(CP(D2D_MCAD27), (IEN  | PTD | EN  | M0)); /*d2d_mcad27*/
-	MUX_VAL(CP(D2D_MCAD28), (IEN  | PTD | EN  | M0)); /*d2d_mcad28*/
-	MUX_VAL(CP(D2D_MCAD29), (IEN  | PTD | EN  | M0)); /*d2d_mcad29*/
-	MUX_VAL(CP(D2D_MCAD30), (IEN  | PTD | EN  | M0)); /*d2d_mcad30*/
-	MUX_VAL(CP(D2D_MCAD31), (IEN  | PTD | EN  | M0)); /*d2d_mcad31*/
-	MUX_VAL(CP(D2D_MCAD32), (IEN  | PTD | EN  | M0)); /*d2d_mcad32*/
-	MUX_VAL(CP(D2D_MCAD33), (IEN  | PTD | EN  | M0)); /*d2d_mcad33*/
-	MUX_VAL(CP(D2D_MCAD34), (IEN  | PTD | EN  | M0)); /*d2d_mcad34*/
-	MUX_VAL(CP(D2D_MCAD35), (IEN  | PTD | EN  | M0)); /*d2d_mcad35*/
-	MUX_VAL(CP(D2D_MCAD36), (IEN  | PTD | EN  | M0)); /*d2d_mcad36*/
-	MUX_VAL(CP(D2D_CLK26MI), (IEN  | PTD | DIS | M0)); /*d2d_clk26mi*/
-	MUX_VAL(CP(D2D_NRESPWRON), (IEN  | PTD | EN  | M0)); /*d2d_nrespwron*/
-	MUX_VAL(CP(D2D_NRESWARM), (IEN  | PTU | EN  | M0)); /*d2d_nreswarm */
-	MUX_VAL(CP(D2D_ARM9NIRQ), (IEN  | PTD | DIS | M0)); /*d2d_arm9nirq */
-	MUX_VAL(CP(D2D_UMA2P6FIQ), (IEN  | PTD | DIS | M0)); /*d2d_uma2p6fiq*/
-	MUX_VAL(CP(D2D_SPINT), (IEN  | PTD | EN  | M0)); /*d2d_spint*/
-	MUX_VAL(CP(D2D_FRINT), (IEN  | PTD | EN  | M0)); /*d2d_frint*/
-	MUX_VAL(CP(D2D_DMAREQ0), (IEN  | PTD | DIS | M0)); /*d2d_dmareq0*/
-	MUX_VAL(CP(D2D_DMAREQ1), (IEN  | PTD | DIS | M0)); /*d2d_dmareq1*/
-	MUX_VAL(CP(D2D_DMAREQ2), (IEN  | PTD | DIS | M0)); /*d2d_dmareq2*/
-	MUX_VAL(CP(D2D_DMAREQ3), (IEN  | PTD | DIS | M0)); /*d2d_dmareq3*/
-	MUX_VAL(CP(D2D_N3GTRST), (IEN  | PTD | DIS | M0)); /*d2d_n3gtrst*/
-	MUX_VAL(CP(D2D_N3GTDI), (IEN  | PTD | DIS | M0)); /*d2d_n3gtdi*/
-	MUX_VAL(CP(D2D_N3GTDO), (IEN  | PTD | DIS | M0)); /*d2d_n3gtdo*/
-	MUX_VAL(CP(D2D_N3GTMS), (IEN  | PTD | DIS | M0)); /*d2d_n3gtms*/
-	MUX_VAL(CP(D2D_N3GTCK), (IEN  | PTD | DIS | M0)); /*d2d_n3gtck*/
-	MUX_VAL(CP(D2D_N3GRTCK), (IEN  | PTD | DIS | M0)); /*d2d_n3grtck*/
-	MUX_VAL(CP(D2D_MSTDBY), (IEN  | PTU | EN  | M0)); /*d2d_mstdby*/
-	MUX_VAL(CP(D2D_SWAKEUP), (IEN  | PTD | EN  | M0)); /*d2d_swakeup*/
-	MUX_VAL(CP(D2D_IDLEREQ), (IEN  | PTD | DIS | M0)); /*d2d_idlereq*/
-	MUX_VAL(CP(D2D_IDLEACK), (IEN  | PTU | EN  | M0)); /*d2d_idleack*/
-	MUX_VAL(CP(D2D_MWRITE), (IEN  | PTD | DIS | M0)); /*d2d_mwrite*/
-	MUX_VAL(CP(D2D_SWRITE), (IEN  | PTD | DIS | M0)); /*d2d_swrite*/
-	MUX_VAL(CP(D2D_MREAD), (IEN  | PTD | DIS | M0)); /*d2d_mread*/
-	MUX_VAL(CP(D2D_SREAD), (IEN  | PTD | DIS | M0)); /*d2d_sread*/
-	MUX_VAL(CP(D2D_MBUSFLAG), (IEN  | PTD | DIS | M0)); /*d2d_mbusflag*/
-	MUX_VAL(CP(D2D_SBUSFLAG), (IEN  | PTD | DIS | M0)); /*d2d_sbusflag*/
-	MUX_VAL(CP(SDRC_CKE0), (IDIS | PTU | EN  | M0)); /*sdrc_cke0*/
-	MUX_VAL(CP(SDRC_CKE1), (IDIS | PTU | EN  | M0)); /*sdrc_cke1*/
 }
 
+#define LOGIC_NAND_GPMC_CONFIG1 0x00001800
+#define LOGIC_NAND_GPMC_CONFIG2 0x00090900
+#define LOGIC_NAND_GPMC_CONFIG3 0x00090902
+#define LOGIC_NAND_GPMC_CONFIG4 0x07020702
+#define LOGIC_NAND_GPMC_CONFIG5 0x00080909
+#define LOGIC_NAND_GPMC_CONFIG6 0x000002CF
+#define LOGIC_NAND_GPMC_CONFIG7 0x00000C70
 
-
+static void setup_nand_settings(void)
+{
+    /* Configure GPMC registers */
+    writel(0x00000000, &gpmc_cfg->cs[0].config7);
+    sdelay(1000);
+    writel(LOGIC_NAND_GPMC_CONFIG1, &gpmc_cfg->cs[0].config1);
+    writel(LOGIC_NAND_GPMC_CONFIG2, &gpmc_cfg->cs[0].config2);
+    writel(LOGIC_NAND_GPMC_CONFIG3, &gpmc_cfg->cs[0].config3);
+    writel(LOGIC_NAND_GPMC_CONFIG4, &gpmc_cfg->cs[0].config4);
+    writel(LOGIC_NAND_GPMC_CONFIG5, &gpmc_cfg->cs[0].config5);
+    writel(LOGIC_NAND_GPMC_CONFIG6, &gpmc_cfg->cs[0].config6);
+    writel(LOGIC_NAND_GPMC_CONFIG7, &gpmc_cfg->cs[0].config7);
+    sdelay(2000);
+}
+  
 // GPMC settings for LV SOM Ethernet chip
 #define LOGIC_NET_GPMC_CONFIG1  0x00001000
 #define LOGIC_NET_GPMC_CONFIG2  0x00080701
@@ -922,31 +460,6 @@ static void setup_net_chip(void)
 
 }
 
-// GPMC settings for LOGIC 1760 chip
-#define LOGIC_ISP1760_GPMC_CONFIG1  0x00001200 // 16-bit/MuxADDATA
-#define LOGIC_ISP1760_GPMC_CONFIG2  0x00090a01 // CSWROFFTIME = 9 cycles, CSRDOFFTIME = 10 cycles, CSONTIME=1 cycle
-#define LOGIC_ISP1760_GPMC_CONFIG3  0x00090a01 // ADVWROFFTIME = 9 cycles, ADVRDOFFTIME = 10 cycles, ADVONTIME=1
-#define LOGIC_ISP1760_GPMC_CONFIG4  0x08030a02 // WEOFFTIME = 8 cycles,  WEONTIME = 3 cycles, OEOFFTIME = 10 cycles, OEONTIME = 2 cycles
-#define LOGIC_ISP1760_GPMC_CONFIG5  0x00090a0a // RDACCESSTIME = 9 cycles, WRCYCLETIME = 10, RDCYCLETIME = 10
-#define LOGIC_ISP1760_GPMC_CONFIG6  0x08030a80 // WRACCESSTIME = 8 cycles, WRDATAONADMUXBUS = 3, CYCLE2CYCLEDELAY = 10 cycles, CYCLE2CYCLESAMECSEN = 1, BUSTURNAROUND=0
-#define LOGIC_ISP1760_GPMC_CONFIG7  0x00000f5c // MASKADDRESS = 16MiB, CSVALID = 1, BASEADDRESS = ?
-
-/*
- * Routine: setup_isp1760_chip
- * Description: Setting up the configuration GPMC registers specific to the
- *		ISP1760 USB hardware.
- */
-static void setup_isp1760_chip(void)
-{
-	/* Configure GPMC registers */
-	writel(LOGIC_ISP1760_GPMC_CONFIG1, &gpmc_cfg->cs[6].config1);
-	writel(LOGIC_ISP1760_GPMC_CONFIG2, &gpmc_cfg->cs[6].config2);
-	writel(LOGIC_ISP1760_GPMC_CONFIG3, &gpmc_cfg->cs[6].config3);
-	writel(LOGIC_ISP1760_GPMC_CONFIG4, &gpmc_cfg->cs[6].config4);
-	writel(LOGIC_ISP1760_GPMC_CONFIG5, &gpmc_cfg->cs[6].config5);
-	writel(LOGIC_ISP1760_GPMC_CONFIG6, &gpmc_cfg->cs[6].config6);
-	writel(LOGIC_ISP1760_GPMC_CONFIG7, &gpmc_cfg->cs[6].config7);
-}
 
 #define LOGIC_STNOR_ASYNC_GPMC_CONFIG1	0x00001211
 #define LOGIC_STNOR_ASYNC_GPMC_CONFIG2	0x00080901
@@ -1056,8 +569,6 @@ static void fix_flash_sync(void)
 int board_eth_init(bd_t *bis)
 {
 	int rc = 0;
-#ifdef CONFIG_SMC911X
 	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
-#endif
 	return rc;
 }
