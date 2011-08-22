@@ -156,12 +156,12 @@ int board_init(void)
 		omap_set_gpio_direction(AIRCELL_LCD_POWER_ENABLE, 0);
 		omap_set_gpio_dataout(AIRCELL_LCD_POWER_ENABLE, 0);
 	}
-#endif
 	/* Enable 23V - OFF */
 	if (!omap_request_gpio(AIRCELL_23V_ENABLE)) {
 		omap_set_gpio_direction(AIRCELL_23V_ENABLE, 0);
 		omap_set_gpio_dataout(AIRCELL_23V_ENABLE, 0);
 	}
+#endif
 
 	/* WiFi enable detect */
 	if (!omap_request_gpio(AIRCELL_WIFI_ENABLE_DETECT)) {
@@ -342,8 +342,10 @@ int misc_init_r(void)
 	/* Set I2C 2 pins to 1 */
 
     /* Configure and set the GPIOs */
+#ifdef CLOUDSURFER_P1
 	writel(~(GPIO31) , &gpio3_base->oe);
 	writel(0,&gpio3_base->setdataout);
+#endif
     writel(~(GPIO23 | GPIO10 | GPIO8), &gpio6_base->oe);
     writel( GPIO23 | GPIO10 | GPIO8 , &gpio6_base->setdataout);
 

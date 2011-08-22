@@ -184,10 +184,10 @@
 	MUX_VAL(CP(MMC1_DAT7), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT7 - GPIO-129*/
 
 /* Tarr - LCD SPI setup */
-	MUX_VAL(CP(MMC2_CLK), (IEN  | PTU | EN  | M1)); 	/*MCSPI3_CLK*/
-	MUX_VAL(CP(MMC2_CMD), (IEN  | PTU | EN  | M1)); 	/*MCSPI3_SMO*/
-	MUX_VAL(CP(MMC2_DAT0), (IEN  | PTU | EN  | M1)); 	/*MCSPI3_SMI*/
-	MUX_VAL(CP(MMC2_DAT3), (IEN  | PTU | EN  | M1)); 	/*MCSPI3_CS0*/
+	MUX_VAL(CP(MMC2_CLK), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_CLK*/
+	MUX_VAL(CP(MMC2_CMD), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_SMO*/
+	MUX_VAL(CP(MMC2_DAT0), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_SMI*/
+	MUX_VAL(CP(MMC2_DAT3), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_CS0*/
 
 /* Tarr - Default unsued MMC2 lines to GPIOs */
     MUX_VAL(CP(MMC2_DAT1), (IEN  | PTU | EN  | M4)); /*GPIO_133*/
