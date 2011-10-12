@@ -127,8 +127,11 @@
 	MUX_VAL(CP(DSS_DATA22), (IDIS | PTD | DIS | M0)); /*DSS_DATA22*/
 	MUX_VAL(CP(DSS_DATA23), (IDIS | PTD | DIS | M0)); /*DSS_DATA23*/
 
-	MUX_VAL(CP(CAM_HS), (IDIS  | PTU | DIS  | M0)); /*CAM_HS */
-	MUX_VAL(CP(CAM_VS), (IDIS | PTU | DIS  | M0));  /*CAM_VS */
+/* Tarr - WiFi Detect */
+	MUX_VAL(CP(CAM_HS), (IEN  | PTU | DIS  | M4)); /*GPIO_94 */
+/* Tarr - Camera Power Down */
+	MUX_VAL(CP(CAM_VS), (IDIS | PTU | DIS  | M4));  /*GPIO_95 */
+
 	MUX_VAL(CP(CAM_XCLKA), (IDIS | PTD | DIS | M0)); /*CAM_XCLKA*/
 	MUX_VAL(CP(CAM_PCLK), (IEN  | PTU | EN  | M0)); /*CAM_PCLK*/
 	MUX_VAL(CP(CAM_FLD), (IDIS | PTD | DIS | M4)); /*GPIO_98*/
@@ -139,23 +142,27 @@
 	MUX_VAL(CP(CAM_D3), (IEN  | PTD | DIS | M0)); /*CAM_D3*/
 	MUX_VAL(CP(CAM_D4), (IEN  | PTD | DIS | M0)); /*CAM_D4*/
 	MUX_VAL(CP(CAM_D5), (IEN  | PTD | DIS | M0)); /*CAM_D5*/
-	MUX_VAL(CP(CAM_D6), (IEN  | PTD | DIS | M0)); /*CAM_D6*/
-	MUX_VAL(CP(CAM_D7), (IEN  | PTD | DIS | M0)); /*CAM_D7*/
-	MUX_VAL(CP(CAM_D8), (IEN  | PTD | DIS | M0)); /*CAM_D8*/
-	MUX_VAL(CP(CAM_D9), (IEN  | PTD | DIS | M0)); /*CAM_D9*/
+
+/* Tarr - In Cradle Detect */
+	MUX_VAL(CP(CAM_D6), (IEN  | PTD | DIS | M4)); /*GPIO_105*/
+/* Tarr - Handset Detect */
+	MUX_VAL(CP(CAM_D7), (IEN  | PTD | DIS | M4)); /*GPIO_106*/
+/* Tarr - Volume Up detect */
+	MUX_VAL(CP(CAM_D8), (IEN  | PTD | DIS | M4)); /*GPIO_107*/
+/* Tarr - Volume Down Detect */
+	MUX_VAL(CP(CAM_D9), (IEN  | PTD | DIS | M4)); /*GPIO_108*/
+
 	MUX_VAL(CP(CAM_D10), (IEN  | PTD | DIS | M0)); /*CAM_D10*/
 	MUX_VAL(CP(CAM_D11), (IEN  | PTD | DIS | M0)); /*CAM_D11*/
 
 /* Tarr - LCD Reset */
-	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | DIS | M4)); /*GPIO-111*/
+	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | EN | M4)); /*GPIO-111*/
 /* Tarr - Accelerometer Interrupt */
 	MUX_VAL(CP(CAM_WEN), (IEN  | PTD | DIS | M4)); /*GPIO_167*/
 
-/* Tarr - Hand Set Detect */
-	MUX_VAL(CP(CSI2_DX0), (IEN  | PTU | EN | M4)); /*GPIO-112*/
+	MUX_VAL(CP(CSI2_DX0), (IEN  | PTU | EN | M0)); /*CSI2_DX0*/
 	MUX_VAL(CP(CSI2_DY0), (IEN  | PTD | DIS | M0)); /*CSI2_DY0*/
-/* Tarr - WiFi Enable */
-	MUX_VAL(CP(CSI2_DX1), (IEN  | PTU | EN | M4)); /*GPIO-114*/
+	MUX_VAL(CP(CSI2_DX1), (IEN  | PTU | EN | M0)); /*CSI2_DX1*/
 	MUX_VAL(CP(CSI2_DY1), (IEN  | PTD | DIS | M0)); /*CSI2_DY1*/
 
 	/*Audio Interface */
@@ -233,10 +240,10 @@
 
 	MUX_VAL(CP(MCBSP_CLKS), (IEN  | PTU | DIS | M0)); /*McBSP_CLKS*/
 
-/* Tarr - Volume UP Detect */
-	MUX_VAL(CP(UART3_CTS_RCTX), (IEN  | PTU | DIS  | M4)); /*UART3_CTS_RCTX GPIO-163*/
-/* Tarr - Volume Down  Detect*/
-	MUX_VAL(CP(UART3_RTS_SD), (IEN | PTU | DIS | M4)); /*UART3_RTS_SD */
+/* Tarr - Ear Piece Enable  */
+	MUX_VAL(CP(UART3_CTS_RCTX), (IDIS  | PTU | DIS  | M4)); /* GPIO_163 */
+/* Tarr - LCD Backlight Enable */
+	MUX_VAL(CP(UART3_RTS_SD), (IDIS | PTU | DIS | M4)); /*GPIO_164 */
 
 	MUX_VAL(CP(UART3_RX_IRRX), (IEN  | PTD | DIS | M0)); /*UART3_RX_IRRX*/
 	MUX_VAL(CP(UART3_TX_IRTX), (IDIS | PTD | DIS | M0)); /*UART3_TX_IRTX*/
