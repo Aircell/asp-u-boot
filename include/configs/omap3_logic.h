@@ -205,7 +205,7 @@
 	"rootpath=/opt/nfs-exports/ltib-omap\0"				\
 	"ramdisksize=89000\0"						\
 	"kernelimage=uImage\0"						\
-	"rootdevice=/dev/mtdblock4\0"					\
+	"rootdevice=/dev/mmcblk0p2\0"					\
 	"rootfstype=yaffs2\0"						\
 	"nfsoptions=,wsize=1500,rsize=1500\0"				\
 	"nfsboot=bootp; setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
