@@ -198,7 +198,12 @@
 #define CONFIG_BOOTDELAY		5
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
-	"display=16\0"							\
+	"display=16\0" \
+	"display_mode=lcd:480x800-32\0" \
+	"rotate_type=1\0" \
+	"rotate=2\0" \
+	"display_vram=1:4M\0" \
+	"display_debug=0\0" \
 	"loadaddr=0x81000000\0"						\
 	"rootfsaddr=0x81300000\0"					\
 	"consoledev=ttyS0\0"						\
@@ -211,10 +216,11 @@
 	"xipboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/ram rw ramdisk_size=${ramdisksize} ${otherbootargs};bootm ${loadaddr} ${rootfsaddr}\0" \
 	"rootdevice=/dev/mmcblk0p2\0"					\
 	"rootfstype=yaffs\0"						\
+	"memsize=128M\0" \
 	"mtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};bootm ${loadaddr}\0" \
 	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmc init;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
 	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
-	"tboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
+	"tboot=setenv bootargs mem=${memsize} display=${display} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdevice} rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 #define CONFIG_BOOTCOMMAND "run tboot"
 
