@@ -211,10 +211,10 @@
 	"rootfstype=yaffs2\0"						\
 	"nfsoptions=,wsize=1500,rsize=1500\0"				\
 	"memsize=128M\0" \
-	"nfsboot=bootp; setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
+	"nfsboot=bootp; setenv bootargs mem=${memsize} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
 	"yaffs2boot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mtdblock4 rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs};nandecc hw; nand read ${loadaddr} 280000 400000; bootm ${loadaddr}\0" \
 	"netprep=mmc init; fatload mmc 0 80000000 netboot.img; source\0" \
-    "sdboot=setenv bootargs mem=${memsize} display=${display} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdevice} rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
+    "sdboot=setenv bootargs mem=${memsize} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdevice} rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 //#define CONFIG_BOOTCOMMAND "run nfsboot"
 #define CONFIG_BOOTCOMMAND "run sdboot"
