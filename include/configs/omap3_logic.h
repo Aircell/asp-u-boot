@@ -198,37 +198,40 @@
 #define CONFIG_BOOTDELAY		5
 
 #define CONFIG_EXTRA_ENV_SETTINGS					\
-	"display=16\0" \
-	"display_mode=lcd:480x800-32\0" \
-	"rotate_type=1\0" \
-	"rotate=2\0" \
-	"display_vram=1:4M\0" \
-	"display_debug=0\0" \
+    "rotate_type=1\0" \
+    "rotate=2\0" \
+    "display_vram=1:4M\0" \
 	"loadaddr=0x81000000\0"						\
 	"rootfsaddr=0x81300000\0"					\
 	"consoledev=ttyS0\0"						\
 	"rootpath=/opt/nfs-exports/ltib-omap\0"				\
 	"ramdisksize=89000\0"						\
 	"kernelimage=uImage\0"						\
-	"nfsoptions=,wsize=1500,rsize=1500\0"				\
-	"nfsboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${serverip}:${rootpath}${nfsoptions} ip=dhcp ${otherbootargs};tftpboot ${loadaddr} ${kernelimage};bootm ${loadaddr}\0" \
-	"ramboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/ram rw ramdisk_size=${ramdisksize} ${otherbootargs};tftpboot ${loadaddr} ${kernelimage};tftpboot ${rootfsaddr} rootfs.ext2.gz.uboot;bootm ${loadaddr} ${rootfsaddr}\0" \
-	"xipboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/ram rw ramdisk_size=${ramdisksize} ${otherbootargs};bootm ${loadaddr} ${rootfsaddr}\0" \
 	"rootdevice=/dev/mmcblk0p2\0"					\
-	"rootfstype=yaffs\0"						\
+	"rootfstype=yaffs2\0"						\
+	"nfsoptions=,wsize=1500,rsize=1500\0"				\
 	"memsize=128M\0" \
-	"mtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};bootm ${loadaddr}\0" \
-	"sdmtdboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=${rootdevice} rootfstype=${rootfstype} rw ${otherbootargs};mmc init;fatload mmc0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
-	"androidboot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.console=${consoledev} ${otherbootargs}; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0" \
-	"tboot=setenv bootargs mem=${memsize} display=${display} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdevice} rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
+	"nfsboot=bootp; setenv bootargs mem=${memsize} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
+	"yaffs2boot=setenv bootargs display=${display} console=${consoledev},${baudrate} root=/dev/mtdblock4 rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs};nandecc hw; nand read ${loadaddr} 280000 400000; bootm ${loadaddr}\0" \
+	"netprep=mmc init; fatload mmc 0 80000000 netboot.img; source\0" \
+    "sdboot=setenv bootargs mem=${memsize} vram=10M omapfb.vram=${display_vram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdevice} rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
-#define CONFIG_BOOTCOMMAND "run tboot"
+//#define CONFIG_BOOTCOMMAND "run nfsboot"
+#define CONFIG_BOOTCOMMAND "run sdboot"
+//#define CONFIG_BOOTCOMMAND "run netprep"
 
 #define CONFIG_PREBOOT \
-	"echo ======================NOTICE============================;"    \
-	"echo This is the first time that you boot up this board." \
-	"printenv bootm'" \
-	"bootm;"
+	"echo ==========================NOTICE============================;"    \
+	"echo ;" \
+	"echo Type 'run netprep'     to prepare the flash for netbooting;" \
+	"echo Type 'run yaffs2boot'  to boot from flash;" \
+	"echo Type 'run tboot'       to boot from sdcard;" \
+	"echo Type 'run nfsboot'     to boot from the network;" \
+	"echo ;" \
+	"echo Use 'setenv bootcmd' to set your default, which is currently: ;" \
+	"printenv bootcmd ;"  \
+	"echo Then run 'saveenv' to make your changes persistent;" \
+	"echo ==========================******============================;" 
 
 	
 #define CONFIG_CMDLINE_EDITING		1
