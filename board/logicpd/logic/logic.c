@@ -329,6 +329,9 @@ int misc_init_r(void)
 #else
 	printf("P2\n");
 #endif
+#if defined(BUILD_TAG)
+	printf ("Build: %s\n", BUILD_TAG);
+#endif
 
 	fetch_production_data();
 
