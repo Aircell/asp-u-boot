@@ -276,13 +276,13 @@ int readenv (size_t offset, u_char * buf)
 		} else {
 			char_ptr = &buf[amount_loaded];
 			if (nand_read(&nand_info[0], offset, &len, char_ptr))
-				return 1;
+				return 2;
 			offset += blocksize;
 			amount_loaded += len;
 		}
 	}
 	if (amount_loaded != CONFIG_ENV_SIZE)
-		return 1;
+		return 3;
 
 	return 0;
 }
@@ -347,6 +347,7 @@ void env_relocate_spec (void)
 	if(!crc1_ok && !crc2_ok) {
 		free(tmp_env1);
 		free(tmp_env2);
+		puts("CRC1 and CRC0 not OK\n");
 		return use_default();
 	} else if(crc1_ok && !crc2_ok)
 		gd->env_valid = 1;
@@ -399,12 +400,20 @@ void env_relocate_spec (void)
 		return use_default();
 #endif
 
-	ret = readenv(CONFIG_ENV_OFFSET, (u_char *) env_ptr);
-	if (ret)
-		return use_default();
+	/* JFK  exec nandecc hw */
+	omap_nand_switch_ecc(1);
 
-	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc)
+	ret = readenv(CONFIG_ENV_OFFSET, (u_char *) env_ptr);
+	if (ret) {
+		printf("CONFIG_ENV_OFFSET (%x) returns %d\n", CONFIG_ENV_OFFSET, ret);
 		return use_default();
+	}
+	if ((ret=crc32(0, env_ptr->data, ENV_SIZE)) != env_ptr->crc) {
+	
+		
+		printf("CRC %d != %d\n", ret, env_ptr->crc);
+		return use_default();
+	}
 #endif /* ! ENV_IS_EMBEDDED */
 }
 #endif /* CONFIG_ENV_OFFSET_REDUND */
