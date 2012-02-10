@@ -81,7 +81,8 @@
 	MUX_VAL(CP(GPMC_NCS3), (IEN  | PTD | DIS | M0)); /*GPMC_nCS3*/
 	MUX_VAL(CP(GPMC_NCS4), (IDIS | PTU | EN  | M7)); /*GPMC_nCS4*/
 	MUX_VAL(CP(GPMC_NCS5), (IDIS | PTD | DIS | M7)); /*GPMC_nCS5*/
-	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | EN  | M0)); /*GPMC_nCS6*/
+/* TARR - Audio MUTE */
+	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | DIS  | M4)); /*GPIO-57 */
 	MUX_VAL(CP(GPMC_NCS7), (IEN  | PTU | EN  | M1)); /*GPMC_IO_DIR*/
 
 /* TARR - Touch Screen Reset */
