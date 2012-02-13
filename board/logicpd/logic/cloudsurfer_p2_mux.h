@@ -207,10 +207,10 @@
 /* Tarr - 5.0V Analog enable */
 	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | EN  | M4)); /*GPIO_134*/
 
-/* Tarr - Bluetooth*/
+/* Tarr - Audio via ALSA and (maybe) Bluetooth*/
 	MUX_VAL(CP(MCBSP3_DX), (IDIS  | PTD | DIS | M0)); /*McBSP3_DX*/
-	MUX_VAL(CP(MCBSP3_DR), (IDIS | PTD | DIS | M0)); /*McBSP3_DR*/
-	MUX_VAL(CP(MCBSP3_CLKX), (IDIS | PTD | DIS | M0)); /*McBSP3_CLKX*/
+	MUX_VAL(CP(MCBSP3_DR), (IEN | PTD | DIS | M0)); /*McBSP3_DR*/
+	MUX_VAL(CP(MCBSP3_CLKX), (IEN | PTD | DIS | M0)); /*McBSP3_CLKX*/
 	MUX_VAL(CP(MCBSP3_FSX), (IEN  | PTD | DIS | M0)); /*McBSP3_FSX*/
 
 	/*Modem Interface */
