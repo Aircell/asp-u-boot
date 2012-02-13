@@ -81,7 +81,8 @@
 	MUX_VAL(CP(GPMC_NCS3), (IEN  | PTD | DIS | M0)); /*GPMC_nCS3*/
 	MUX_VAL(CP(GPMC_NCS4), (IDIS | PTU | EN  | M7)); /*GPMC_nCS4*/
 	MUX_VAL(CP(GPMC_NCS5), (IDIS | PTD | DIS | M7)); /*GPMC_nCS5*/
-	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | EN  | M0)); /*GPMC_nCS6*/
+/* TARR - Audio MUTE */
+	MUX_VAL(CP(GPMC_NCS6), (IDIS | PTU | DIS  | M4)); /*GPIO-57 */
 	MUX_VAL(CP(GPMC_NCS7), (IEN  | PTU | EN  | M1)); /*GPMC_IO_DIR*/
 
 /* TARR - Touch Screen Reset */
@@ -206,10 +207,10 @@
 /* Tarr - 5.0V Analog enable */
 	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | EN  | M4)); /*GPIO_134*/
 
-/* Tarr - Bluetooth*/
+/* Tarr - Audio via ALSA and (maybe) Bluetooth*/
 	MUX_VAL(CP(MCBSP3_DX), (IDIS  | PTD | DIS | M0)); /*McBSP3_DX*/
-	MUX_VAL(CP(MCBSP3_DR), (IDIS | PTD | DIS | M0)); /*McBSP3_DR*/
-	MUX_VAL(CP(MCBSP3_CLKX), (IDIS | PTD | DIS | M0)); /*McBSP3_CLKX*/
+	MUX_VAL(CP(MCBSP3_DR), (IEN | PTD | DIS | M0)); /*McBSP3_DR*/
+	MUX_VAL(CP(MCBSP3_CLKX), (IEN | PTD | DIS | M0)); /*McBSP3_CLKX*/
 	MUX_VAL(CP(MCBSP3_FSX), (IEN  | PTD | DIS | M0)); /*McBSP3_FSX*/
 
 	/*Modem Interface */
