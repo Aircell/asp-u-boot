@@ -86,7 +86,7 @@
 	MUX_VAL(CP(GPMC_NCS7), (IEN  | PTU | EN  | M1)); /*GPMC_IO_DIR*/
 
 /* TARR - Touch Screen Reset */
-	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | EN  | M4)); /*GPMC_nBE1 GPIO-61*/
+	MUX_VAL(CP(GPMC_NBE1), (IDIS | PTU | DIS  | M4)); /*GPMC_nBE1 GPIO-61*/
 
 	MUX_VAL(CP(GPMC_WAIT0), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT0*/
 	MUX_VAL(CP(GPMC_WAIT1), (IEN  | PTU | EN  | M0)); /*GPMC_WAIT1*/
@@ -157,7 +157,7 @@
 	MUX_VAL(CP(CAM_D11), (IEN  | PTD | DIS | M0)); /*CAM_D11*/
 
 /* Tarr - LCD Reset */
-	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | EN | M4)); /*GPIO-111*/
+	MUX_VAL(CP(CAM_XCLKB), (IDIS | PTU | DIS | M4)); /*GPIO-111*/
 /* Tarr - Accelerometer Interrupt */
 	MUX_VAL(CP(CAM_WEN), (IEN  | PTD | DIS | M4)); /*GPIO_167*/
 
@@ -185,11 +185,11 @@
 	MUX_VAL(CP(CAM_STROBE), (IEN | PTU | EN | M4)); /*GPIO-126*/
 
 /* Tarr - Blue enable */
-	MUX_VAL(CP(MMC1_DAT5), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT5 - GPIO-127*/
+	MUX_VAL(CP(MMC1_DAT5), (IDIS  | PTU | DIS  | M4)); /*MMC1_DAT5 - GPIO-127*/
 /* Tarr - Red enable */
-	MUX_VAL(CP(MMC1_DAT6), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT6 - GPIO-128*/
+	MUX_VAL(CP(MMC1_DAT6), (IDIS  | PTU | DIS  | M4)); /*MMC1_DAT6 - GPIO-128*/
 /* Tarr - Ringer enable */
-	MUX_VAL(CP(MMC1_DAT7), (IDIS  | PTU | EN  | M4)); /*MMC1_DAT7 - GPIO-129*/
+	MUX_VAL(CP(MMC1_DAT7), (IDIS  | PTU | DIS  | M4)); /*MMC1_DAT7 - GPIO-129*/
 
 /* Tarr - LCD SPI setup */
 	MUX_VAL(CP(MMC2_CLK), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_CLK*/
@@ -198,14 +198,14 @@
 	MUX_VAL(CP(MMC2_DAT3), (IEN  | PTU | DIS  | M1)); 	/*MCSPI3_CS0*/
 
 /* Tarr - Default unsued MMC2 lines to GPIOs */
-    MUX_VAL(CP(MMC2_DAT1), (IEN  | PTU | EN  | M4)); /*GPIO_133*/
-    MUX_VAL(CP(MMC2_DAT4), (IEN  | PTU | EN  | M4)); /*GPIO_136*/
-    MUX_VAL(CP(MMC2_DAT5), (IEN  | PTU | EN  | M4)); /*GPIO_137*/
-    MUX_VAL(CP(MMC2_DAT6), (IEN  | PTU | EN  | M4)); /*GPIO_138*/
-    MUX_VAL(CP(MMC2_DAT7), (IEN  | PTU | EN  | M4)); /*GPIO_139*/
+    MUX_VAL(CP(MMC2_DAT1), (IEN  | PTU | DIS  | M4)); /*GPIO_133*/
+    MUX_VAL(CP(MMC2_DAT4), (IEN  | PTU | DIS  | M4)); /*GPIO_136*/
+    MUX_VAL(CP(MMC2_DAT5), (IEN  | PTU | DIS  | M4)); /*GPIO_137*/
+    MUX_VAL(CP(MMC2_DAT6), (IEN  | PTU | DIS  | M4)); /*GPIO_138*/
+    MUX_VAL(CP(MMC2_DAT7), (IEN  | PTU | DIS  | M4)); /*GPIO_139*/
 
 /* Tarr - 5.0V Analog enable */
-	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | EN  | M4)); /*GPIO_134*/
+	MUX_VAL(CP(MMC2_DAT2), (IDIS | PTU | DIS  | M4)); /*GPIO_134*/
 
 /* Tarr - Audio via ALSA and (maybe) Bluetooth*/
 	MUX_VAL(CP(MCBSP3_DX), (IDIS  | PTD | DIS | M0)); /*McBSP3_DX*/
@@ -237,7 +237,7 @@
 	MUX_VAL(CP(MCBSP1_CLKX), (IDIS | PTD | DIS | M4)); /*GPIO_162*/
 
 /* Tarr - Battery Cutoff  */
-	MUX_VAL(CP(MCBSP1_DR), (IDIS | PTU | EN | M4)); /*GPIO_159*/
+	MUX_VAL(CP(MCBSP1_DR), (IDIS | PTU | DIS | M4)); /*GPIO_159*/
 
 	MUX_VAL(CP(MCBSP_CLKS), (IEN  | PTU | DIS | M0)); /*McBSP_CLKS*/
 
@@ -316,7 +316,7 @@
 	MUX_VAL(CP(SYS_CLKOUT1), (IEN  | PTD | DIS | M0)); /*SYS_CLKOUT1*/
 
 /* Tarr - LED enable */
-	MUX_VAL(CP(SYS_CLKOUT2), (IDIS  | PTU | EN  | M4)); /*GPIO_186*/
+	MUX_VAL(CP(SYS_CLKOUT2), (IDIS  | PTU | DIS | M4)); /*GPIO_186*/
 /* Tarr - Sofware Reset */
 	MUX_VAL(CP(JTAG_EMU1), (IDIS  | PTD | EN  | M4)); /*JTAG_EMU1 - GPIO 31 */
 

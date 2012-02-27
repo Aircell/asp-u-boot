@@ -183,8 +183,9 @@ CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
 
 ifdef BUILD_TAG
+SHA1 := $(shell git rev-parse --short HEAD)
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes \
-	-DBUILD_TAG='"$(BUILD_TAG)"'
+	-DBUILD_TAG='"$(BUILD_TAG)_sha1-$(SHA1)"'
 else
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes
 endif
