@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-TOOLSUBDIRS =
+TOOLSUBDIRS = env
 
 #
 # toolchains targeting win32 generate .exe files

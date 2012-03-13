@@ -24,6 +24,7 @@
  * MA 02111-1307 USA
  */
 
+#define __COMPILER_H__
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -34,6 +35,8 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+typedef unsigned long   ulong;
 
 #ifdef MTD_OLD
 # include <stdint.h>
