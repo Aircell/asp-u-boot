@@ -1,9 +1,9 @@
 
 
-all : flashem.img netboot.img
+all : install.img netboot.img
 
 clean : 
-	rm -f flashem.img netboot.img
+	rm -f install.img netboot.img
 
 %.img : %
 	../tools/mkimage -T script -C none -n $^ -d $^ $@

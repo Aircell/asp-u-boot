@@ -1,0 +1,16 @@
+echo ====================================
+echo
+echo  SD Card Installation
+echo
+echo ====================================
+echo
+
+setenv bootargs "console=ttyS0,115200 root=/dev/ram0 initrd=0x81500000,12M rootfstype=ext2 rw"
+if fatload mmc1 1 81000000 uImage ; then
+	if fatload mmc1 1 81500000 instext2.gz ; then
+		bootm 0x81000000
+	fi
+fi
+echo Error loading uImage or instext2.gz from SD card
+echo ====== List of file on SD; ============
+fatls mmc1 1
