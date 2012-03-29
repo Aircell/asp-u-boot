@@ -66,8 +66,7 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_NET_MULTI
-#define CONFIG_LAN91C96	/* we have an SMC9194 on-board */
+#define CONFIG_DRIVER_LAN91C96	/* we have an SMC9194 on-board */
 #define CONFIG_LAN91C96_BASE	0x100e0000
 
 /*

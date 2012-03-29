@@ -29,6 +29,8 @@
 #include "rarp.h"
 #include "tftp.h"
 
+#if defined(CONFIG_CMD_NET)
+
 #define TIMEOUT		5000UL	/* Milliseconds before trying BOOTP again */
 #ifndef	CONFIG_NET_RETRY_COUNT
 # define TIMEOUT_COUNT	5		/* # of timeouts before giving up  */
@@ -114,3 +116,5 @@ RarpRequest (void)
 	NetSetTimeout(TIMEOUT, RarpTimeout);
 	NetSetHandler(RarpHandler);
 }
+
+#endif

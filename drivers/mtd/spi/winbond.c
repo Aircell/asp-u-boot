@@ -289,7 +289,7 @@ out:
 struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 {
 	const struct winbond_spi_flash_params *params;
-	unsigned page_size;
+	unsigned long page_size;
 	struct winbond_spi_flash *stm;
 	unsigned int i;
 
@@ -325,9 +325,8 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 				* params->sectors_per_block
 				* params->nr_blocks;
 
-	printf("SF: Detected %s with page size %u, total ",
-	       params->name, page_size);
-	print_size(stm->flash.size, "\n");
+	debug("SF: Detected %s with page size %u, total %u bytes\n",
+			params->name, page_size, stm->flash.size);
 
 	return &stm->flash;
 }

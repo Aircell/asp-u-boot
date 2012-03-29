@@ -204,7 +204,7 @@ static void clearPci9054 (void)
 
 /* ------------------------------------------------------------------------- */
 int do_pci9054 (cmd_tbl_t * cmdtp, int flag, int argc,
-				char * const argv[])
+				char *argv[])
 {
 	if (strcmp (argv[1], "info") == 0) {
 		showPci9054 ();
@@ -221,7 +221,9 @@ int do_pci9054 (cmd_tbl_t * cmdtp, int flag, int argc,
 		return 0;
 	}
 
-	return cmd_usage(cmdtp);
+	cmd_usage(cmdtp);
+	return 1;
+
 }
 
 U_BOOT_CMD(

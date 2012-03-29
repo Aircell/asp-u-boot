@@ -38,7 +38,6 @@
 #include <linux/stddef.h>
 #include <malloc.h>
 #include <nand.h>
-#include <asm/errno.h>
 
 #if defined(CONFIG_CMD_SAVEENV) && defined(CONFIG_CMD_NAND)
 #define CMD_SAVEENV
@@ -48,6 +47,10 @@
 
 #if defined(CONFIG_ENV_SIZE_REDUND) && (CONFIG_ENV_SIZE_REDUND != CONFIG_ENV_SIZE)
 #error CONFIG_ENV_SIZE_REDUND should be the same as CONFIG_ENV_SIZE
+#endif
+
+#ifdef CONFIG_INFERNO
+#error CONFIG_INFERNO not supported yet
 #endif
 
 #ifndef CONFIG_ENV_RANGE
@@ -266,8 +269,6 @@ int readenv (size_t offset, u_char * buf)
 	u_char *char_ptr;
 
 	blocksize = nand_info[0].erasesize;
-	if (!blocksize)
-		return 1;
 	len = min(blocksize, CONFIG_ENV_SIZE);
 
 	while (amount_loaded < CONFIG_ENV_SIZE && offset < end) {
@@ -276,48 +277,16 @@ int readenv (size_t offset, u_char * buf)
 		} else {
 			char_ptr = &buf[amount_loaded];
 			if (nand_read(&nand_info[0], offset, &len, char_ptr))
-				return 2;
+				return 1;
 			offset += blocksize;
 			amount_loaded += len;
 		}
 	}
 	if (amount_loaded != CONFIG_ENV_SIZE)
-		return 3;
+		return 1;
 
 	return 0;
 }
-
-#ifdef CONFIG_ENV_OFFSET_OOB
-int get_nand_env_oob(nand_info_t *nand, unsigned long *result)
-{
-	struct mtd_oob_ops ops;
-	uint32_t oob_buf[ENV_OFFSET_SIZE/sizeof(uint32_t)];
-	int ret;
-
-	ops.datbuf = NULL;
-	ops.mode = MTD_OOB_AUTO;
-	ops.ooboffs = 0;
-	ops.ooblen = ENV_OFFSET_SIZE;
-	ops.oobbuf = (void *) oob_buf;
-
-	ret = nand->read_oob(nand, ENV_OFFSET_SIZE, &ops);
-	if (ret) {
-		printf("error reading OOB block 0\n");
-		return ret;
-	}
-
-	if (oob_buf[0] == ENV_OOB_MARKER) {
-		*result = oob_buf[1] * nand->erasesize;
-	} else if (oob_buf[0] == ENV_OOB_MARKER_OLD) {
-		*result = oob_buf[1];
-	} else {
-		printf("No dynamic environment marker in OOB block 0\n");
-		return -ENOENT;
-	}
-
-	return 0;
-}
-#endif
 
 #ifdef CONFIG_ENV_OFFSET_REDUND
 void env_relocate_spec (void)
@@ -328,13 +297,6 @@ void env_relocate_spec (void)
 
 	tmp_env1 = (env_t *) malloc(CONFIG_ENV_SIZE);
 	tmp_env2 = (env_t *) malloc(CONFIG_ENV_SIZE);
-
-	if ((tmp_env1 == NULL) || (tmp_env2 == NULL)) {
-		puts("Can't allocate buffers for environment\n");
-		free (tmp_env1);
-		free (tmp_env2);
-		return use_default();
-	}
 
 	if (readenv(CONFIG_ENV_OFFSET, (u_char *) tmp_env1))
 		puts("No Valid Environment Area Found\n");
@@ -347,7 +309,6 @@ void env_relocate_spec (void)
 	if(!crc1_ok && !crc2_ok) {
 		free(tmp_env1);
 		free(tmp_env2);
-		puts("CRC1 and CRC0 not OK\n");
 		return use_default();
 	} else if(crc1_ok && !crc2_ok)
 		gd->env_valid = 1;
@@ -389,31 +350,15 @@ void env_relocate_spec (void)
 #if !defined(ENV_IS_EMBEDDED)
 	int ret;
 
-#if defined(CONFIG_ENV_OFFSET_OOB)
-	ret = get_nand_env_oob(&nand_info[0], &nand_env_oob_offset);
-	/* If unable to read environment offset from NAND OOB then fall through
-	 * to the normal environment reading code below
-	 */
-	if (!ret)
-		printf("Found Environment offset in OOB..\n");
-	else
-		return use_default();
-#endif
-
-	/* JFK  exec nandecc hw */
-	omap_nand_switch_ecc(1);
+    /* JFK  exec nandecc hw */
+    //omap_nand_switch_ecc(1);
 
 	ret = readenv(CONFIG_ENV_OFFSET, (u_char *) env_ptr);
-	if (ret) {
-		printf("CONFIG_ENV_OFFSET (%x) returns %d\n", CONFIG_ENV_OFFSET, ret);
+	if (ret)
 		return use_default();
-	}
-	if ((ret=crc32(0, env_ptr->data, ENV_SIZE)) != env_ptr->crc) {
-	
-		
-		printf("CRC %d != %d\n", ret, env_ptr->crc);
+
+	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc)
 		return use_default();
-	}
 #endif /* ! ENV_IS_EMBEDDED */
 }
 #endif /* CONFIG_ENV_OFFSET_REDUND */

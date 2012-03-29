@@ -292,17 +292,19 @@ static void extract_range(
 }
 
 /* ---------------------------------------------------------------- */
-int do_mii (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+int do_mii (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	char		op[2];
 	unsigned char	addrlo, addrhi, reglo, reghi;
 	unsigned char	addr, reg;
 	unsigned short	data;
 	int		rcode = 0;
-	const char	*devname;
+	char		*devname;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 #if defined(CONFIG_MII_INIT)
 	mii_init ();
@@ -429,7 +431,8 @@ int do_mii (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		else
 			miiphy_set_current_dev (argv[2]);
 	} else {
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	/*

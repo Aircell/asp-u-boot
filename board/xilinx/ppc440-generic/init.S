@@ -19,7 +19,7 @@
 
 #include <ppc_asm.tmpl>
 #include <config.h>
-#include <asm/mmu.h>
+#include <asm-ppc/mmu.h>
 
 .section .bootpg,"ax"
 .globl tlbtab

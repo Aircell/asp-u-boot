@@ -150,7 +150,7 @@ cmd_tbl_t cmd_pca953x[] = {
 #endif
 };
 
-int do_pca953x(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_pca953x(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	static uint8_t chip = CONFIG_SYS_I2C_PCA953X_ADDR;
 	int val;
@@ -164,7 +164,8 @@ int do_pca953x(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (!c || !((argc == (c->maxargs)) ||
 		(((int)c->cmd == PCA953X_CMD_DEVICE) &&
 		 (argc == (c->maxargs - 1))))) {
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	/* arg2 used as chip number or pin number */

@@ -16,6 +16,13 @@
 
 #include <common.h>
 #include <exports.h>
+
+/* the smc911x.h gets base addr through eth_device' iobase */
+struct eth_device {
+	const char *name;
+	unsigned long iobase;
+	void *priv;
+};
 #include "../drivers/net/smc911x.h"
 
 /**
@@ -240,7 +247,7 @@ static void dump_eeprom(struct eth_device *dev)
 static int smc911x_init(struct eth_device *dev)
 {
 	/* See if there is anything there */
-	if (smc911x_detect_chip(dev))
+	if (!smc911x_detect_chip(dev))
 		return 1;
 
 	smc911x_reset(dev);
@@ -313,10 +320,11 @@ static char *getline(void)
 /**
  *	smc911x_eeprom - our application's main() function
  */
-int smc911x_eeprom(int argc, char * const argv[])
+int smc911x_eeprom(int argc, char *argv[])
 {
 	/* Avoid initializing on stack as gcc likes to call memset() */
 	struct eth_device dev;
+	dev.name = __func__;
 	dev.iobase = CONFIG_SMC911X_BASE;
 
 	/* Print the ABI version */

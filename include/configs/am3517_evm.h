@@ -5,7 +5,7 @@
  *
  * Based on omap3_evm_config.h
  *
- * Copyright (C) 2010 Texas Instruments Incorporated
+ * Copyright (C) 2009 Texas Instruments Incorporated
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,12 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_ARMV7		1	/* This is an ARM V7 CPU core */
+#define CONFIG_ARMCORTEXA8	1	/* This is an ARM V7 CPU core */
 #define CONFIG_OMAP		1	/* in a TI OMAP core */
 #define CONFIG_OMAP34XX		1	/* which is a 34XX */
 #define CONFIG_OMAP3_AM3517EVM	1	/* working with AM3517EVM */
 
-#define CONFIG_EMIF4	/* The chip has EMIF4 controller */
+#define CONFIG_EMIF4		1	/* The chip has EMIF4 controller */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap3.h>
@@ -99,15 +99,15 @@
 #define CONFIG_OMAP3_MMC		1
 #define CONFIG_DOS_PARTITION		1
 
-/*
- * USB configuration
+/* USB
  * Enable CONFIG_MUSB_HCD for Host functionalities MSC, keyboard
- * Enable CONFIG_MUSB_UDC for Device functionalities.
+ * Enable CONFIG_MUSB_UDD for Device functionalities.
  */
-#define CONFIG_USB_AM35X		1
+#define CONFIG_USB_AM3517		1
 #define CONFIG_MUSB_HCD			1
+/*#define CONFIG_MUSB_UDC		1*/
 
-#ifdef CONFIG_USB_AM35X
+#ifdef CONFIG_USB_AM3517
 
 #ifdef CONFIG_MUSB_HCD
 #define CONFIG_CMD_USB
@@ -132,11 +132,10 @@
 #define CONFIG_USBD_VENDORID		0x0451
 #define CONFIG_USBD_PRODUCTID		0x5678
 #define CONFIG_USBD_MANUFACTURER	"Texas Instruments"
-#define CONFIG_USBD_PRODUCT_NAME	"AM3517EVM"
+#define CONFIG_USBD_PRODUCT_NAME	"EVM"
 #endif /* CONFIG_MUSB_UDC */
 
-#endif /* CONFIG_USB_AM35X */
-
+#endif /* CONFIG_USB_AM3517 */
 /* commands to include */
 #include <config_cmd_default.h>
 
@@ -163,7 +162,7 @@
 #define CONFIG_SYS_I2C_BUS_SELECT	1
 #define CONFIG_DRIVER_OMAP34XX_I2C	1
 
-#undef CONFIG_CMD_NET
+#define CONFIG_CMD_NET
 /*
  * Board NAND Info.
  */
@@ -323,12 +322,29 @@
 #define CONFIG_SYS_JFFS2_FIRST_BANK	CONFIG_SYS_MAX_FLASH_BANKS
 #define CONFIG_SYS_JFFS2_NUM_BANKS	1
 
-#ifndef __ASSEMBLY__
-extern unsigned int boot_flash_base;
-extern volatile unsigned int boot_flash_env_addr;
-extern unsigned int boot_flash_off;
-extern unsigned int boot_flash_sec;
-extern unsigned int boot_flash_type;
+
+/*
+ * Include flash related variables
+ */
+#include <asm/arch/omap3_flash.h>
+
+
+
+/*-----------------------------------------------------
+ * ethernet support for AM3517 EVM
+ *------------------------------------------------
+ */
+#if defined(CONFIG_CMD_NET)
+#define CONFIG_DRIVER_TI_EMAC
+#define CONFIG_DRIVER_TI_EMAC_USE_RMII
+#define CONFIG_MII
+#define	CONFIG_BOOTP_DEFAULT
+#define CONFIG_BOOTP_DNS
+#define CONFIG_BOOTP_DNS2
+#define CONFIG_BOOTP_SEND_HOSTNAME
+#define CONFIG_NET_RETRY_COUNT 10
+#define CONFIG_NET_MULTI
 #endif
 
 #endif /* __CONFIG_H */
+

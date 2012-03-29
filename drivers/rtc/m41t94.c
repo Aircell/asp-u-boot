@@ -120,4 +120,5 @@ void rtc_reset(void)
 	 * Could not be tested as the reset pin is not wired on
 	 * the sbc35-ag20 board
 	 */
+	return 0;
 }

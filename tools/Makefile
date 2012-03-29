@@ -24,6 +24,33 @@
 TOOLSUBDIRS =
 
 #
+# Mac OS X / Darwin's C preprocessor is Apple specific.  It
+# generates numerous errors and warnings.  We want to bypass it
+# and use GNU C's cpp.  To do this we pass the -traditional-cpp
+# option to the compiler.  Note that the -traditional-cpp flag
+# DOES NOT have the same semantics as GNU C's flag, all it does
+# is invoke the GNU preprocessor in stock ANSI/ISO C fashion.
+#
+# Apple's linker is similar, thanks to the new 2 stage linking
+# multiple symbol definitions are treated as errors, hence the
+# -multiply_defined suppress option to turn off this error.
+#
+
+HOSTCFLAGS = -Wall
+HOST_LDFLAGS =
+
+ifeq ($(HOSTOS)-$(HOSTARCH),darwin-ppc)
+HOSTCFLAGS += -traditional-cpp
+HOST_LDFLAGS += -multiply_defined suppress
+else
+HOSTCFLAGS += -pedantic
+endif
+
+ifeq ($(HOSTOS),cygwin)
+HOSTCFLAGS += -ansi
+endif
+
+#
 # toolchains targeting win32 generate .exe files
 #
 ifneq (,$(findstring WIN32 ,$(shell $(HOSTCC) -E -dM -xc /dev/null)))
@@ -37,15 +64,6 @@ endif
 # so that we can act intelligently.
 #
 include $(TOPDIR)/config.mk
-
-# Enable all the config-independent tools
-ifneq ($(HOST_TOOLS_ALL),)
-CONFIG_LCD_LOGO = y
-CONFIG_CMD_NET = y
-CONFIG_INCA_IP = y
-CONFIG_NETCONSOLE = y
-CONFIG_SHA1_CHECK_UB_IMG = y
-endif
 
 # Generated executable files
 BIN_FILES-$(CONFIG_LCD_LOGO) += bmp_logo$(SFX)
@@ -64,28 +82,29 @@ BIN_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes$(SFX)
 BIN_FILES-y += mkimage$(SFX)
 BIN_FILES-$(CONFIG_NETCONSOLE) += ncb$(SFX)
 BIN_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1$(SFX)
+BIN_FILES-$(CONFIG_TOOL_SIGNGP) += sign-nand-image$(SFX)
 
 # Source files which exist outside the tools directory
 EXT_OBJ_FILES-y += common/env_embedded.o
 EXT_OBJ_FILES-y += common/image.o
-EXT_OBJ_FILES-y += lib/crc32.o
-EXT_OBJ_FILES-y += lib/md5.o
-EXT_OBJ_FILES-y += lib/sha1.o
+EXT_OBJ_FILES-y += lib_generic/crc32.o
+EXT_OBJ_FILES-y += lib_generic/md5.o
+EXT_OBJ_FILES-y += lib_generic/sha1.o
 
 # Source files located in the tools directory
 OBJ_FILES-$(CONFIG_LCD_LOGO) += bmp_logo.o
 OBJ_FILES-$(CONFIG_VIDEO_LOGO) += bmp_logo.o
-NOPED_OBJ_FILES-y += default_image.o
-OBJ_FILES-y += envcrc.o
-NOPED_OBJ_FILES-y += fit_image.o
+OBJ_FILES-y += default_image.o
+OBJ_FILES-$(CONFIG_ENV_IS_EMBEDDED) += envcrc.o
+OBJ_FILES-y += fit_image.o
+OBJ_FILES-$(CONFIG_TOOL_SIGNGP) += sign-nand-image.o
 OBJ_FILES-$(CONFIG_CMD_NET) += gen_eth_addr.o
 OBJ_FILES-$(CONFIG_CMD_LOADS) += img2srec.o
 OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
-NOPED_OBJ_FILES-y += kwbimage.o
-NOPED_OBJ_FILES-y += imximage.o
-NOPED_OBJ_FILES-y += mkimage.o
+OBJ_FILES-y += kwbimage.o
+OBJ_FILES-y += mkimage.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
-NOPED_OBJ_FILES-y += os_support.o
+OBJ_FILES-y += os_support.o
 OBJ_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1.o
 
 # Don't build by default
@@ -112,98 +131,119 @@ endif
 ifeq ($(VENDOR),atmel)
 LOGO_BMP= logos/atmel.bmp
 endif
-ifeq ($(VENDOR),esd)
-LOGO_BMP= logos/esd.bmp
-endif
 ifeq ($(VENDOR),ronetix)
 LOGO_BMP= logos/ronetix.bmp
 endif
-ifeq ($(VENDOR),syteco)
-LOGO_BMP= logos/syteco.bmp
-endif
 
 # now $(obj) is defined
-HOSTSRCS += $(addprefix $(SRCTREE)/,$(EXT_OBJ_FILES-y:.o=.c))
-HOSTSRCS += $(addprefix $(SRCTREE)/tools/,$(OBJ_FILES-y:.o=.c))
-HOSTSRCS += $(addprefix $(SRCTREE)/lib/libfdt/,$(LIBFDT_OBJ_FILES-y:.o=.c))
+SRCS	+= $(addprefix $(SRCTREE)/,$(EXT_OBJ_FILES-y:.o=.c))
+SRCS	+= $(addprefix $(SRCTREE)/tools/,$(OBJ_FILES-y:.o=.c))
+SRCS	+= $(addprefix $(SRCTREE)/libfdt/,$(LIBFDT_OBJ_FILES-y:.o=.c))
 BINS	:= $(addprefix $(obj),$(sort $(BIN_FILES-y)))
 LIBFDT_OBJS	:= $(addprefix $(obj),$(LIBFDT_OBJ_FILES-y))
-
-HOSTOBJS := $(addprefix $(obj),$(OBJ_FILES-y))
-NOPEDOBJS := $(addprefix $(obj),$(NOPED_OBJ_FILES-y))
 
 #
 # Use native tools and options
 # Define __KERNEL_STRICT_NAMES to prevent typedef overlaps
 #
-HOSTCPPFLAGS =	-idirafter $(SRCTREE)/include \
+CPPFLAGS   = -idirafter $(SRCTREE)/include \
 		-idirafter $(OBJTREE)/include2 \
 		-idirafter $(OBJTREE)/include \
-	        -I $(SRCTREE)/lib/libfdt \
+	        -I $(SRCTREE)/libfdt \
 		-I $(SRCTREE)/tools \
 		-DTEXT_BASE=$(TEXT_BASE) -DUSE_HOSTCC \
 		-D__KERNEL_STRICT_NAMES
+CFLAGS     = $(HOSTCFLAGS) $(CPPFLAGS) -O
 
+# No -pedantic switch to avoid libfdt compilation warnings
+FIT_CFLAGS = -Wall $(CPPFLAGS) -O
+
+AFLAGS	   = -D__ASSEMBLY__ $(CPPFLAGS)
+CC	   = $(HOSTCC)
+STRIP	   = $(HOSTSTRIP)
+MAKEDEPEND = makedepend
 
 all:	$(obj).depend $(BINS) $(LOGO-y) subdirs
 
 $(obj)bin2header$(SFX): $(obj)bin2header.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)bmp_logo$(SFX):	$(obj)bmp_logo.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)envcrc$(SFX):	$(obj)crc32.o $(obj)env_embedded.o $(obj)envcrc.o $(obj)sha1.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(obj)gen_eth_addr$(SFX):	$(obj)gen_eth_addr.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)img2srec$(SFX):	$(obj)img2srec.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)inca-swap-bytes$(SFX):	$(obj)inca-swap-bytes.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)mkimage$(SFX):	$(obj)crc32.o \
 			$(obj)default_image.o \
 			$(obj)fit_image.o \
 			$(obj)image.o \
-			$(obj)imximage.o \
 			$(obj)kwbimage.o \
 			$(obj)md5.o \
 			$(obj)mkimage.o \
 			$(obj)os_support.o \
 			$(obj)sha1.o \
 			$(LIBFDT_OBJS)
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)mpc86x_clk$(SFX):	$(obj)mpc86x_clk.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)ncb$(SFX):	$(obj)ncb.o
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	$(CC) $(CFLAGS) $(HOST_LDFLAGS) -o $@ $^
+	$(STRIP) $@
 
 $(obj)ubsha1$(SFX):	$(obj)os_support.o $(obj)sha1.o $(obj)ubsha1.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+# Some files complain if compiled with -pedantic, use FIT_CFLAGS
+$(obj)default_image.o: $(SRCTREE)/tools/default_image.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)fit_image.o: $(SRCTREE)/tools/fit_image.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)image.o: $(SRCTREE)/common/image.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)kwbimage.o: $(SRCTREE)/tools/kwbimage.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)mkimage.o: $(SRCTREE)/tools/mkimage.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)os_support.o: $(SRCTREE)/tools/os_support.c
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
+
+$(obj)sign-nand-image$(SFX): $(obj)sign-nand-image.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
 
 # Some of the tool objects need to be accessed from outside the tools directory
 $(obj)%.o: $(SRCTREE)/common/%.c
-	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
 
-$(obj)%.o: $(SRCTREE)/lib/%.c
-	$(HOSTCC) -g $(HOSTCFLAGS) -c -o $@ $<
+$(obj)%.o: $(SRCTREE)/lib_generic/%.c
+	$(CC) -g $(CFLAGS) -c -o $@ $<
 
-$(obj)%.o: $(SRCTREE)/lib/libfdt/%.c
-	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
+$(LIBFDT_OBJS):
+	$(CC) -g $(FIT_CFLAGS) -c -o $@ $<
 
 subdirs:
 ifeq ($(TOOLSUBDIRS),)
@@ -213,6 +253,8 @@ else
 	    $(MAKE) \
 		HOSTOS=$(HOSTOS) \
 		HOSTARCH=$(HOSTARCH) \
+		HOSTCFLAGS="$(HOSTCFLAGS)" \
+		HOST_LDFLAGS="$(HOST_LDFLAGS)" \
 		-C $$dir || exit 1 ; \
 	done
 endif

@@ -96,6 +96,8 @@
 #include "dns.h"
 #endif
 
+#if defined(CONFIG_CMD_NET)
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef	CONFIG_ARP_TIMEOUT
@@ -1201,8 +1203,7 @@ static IP_t *__NetDefragment(IP_t *ip, int *lenp)
 		h = payload + h->next_hole;
 	}
 
-	/* last fragment may be 1..7 bytes, the "+7" forces acceptance */
-	if (offset8 + ((len + 7) / 8) <= h - payload) {
+	if (offset8 + (len / 8) <= h - payload) {
 		/* no overlap with holes (dup fragment?) */
 		return NULL;
 	}
@@ -1871,15 +1872,15 @@ void copy_filename (char *dst, char *src, int size)
 	*dst = '\0';
 }
 
+#endif
+
 #if defined(CONFIG_CMD_NFS) || defined(CONFIG_CMD_SNTP) || defined(CONFIG_CMD_DNS)
 /*
- * make port a little random (1024-17407)
- * This keeps the math somewhat trivial to compute, and seems to work with
- * all supported protocols/clients/servers
+ * make port a little random, but use something trivial to compute
  */
 unsigned int random_port(void)
 {
-	return 1024 + (get_timer(0) % 0x4000);
+	return 1024 + (get_timer(0) % 0x8000);;
 }
 #endif
 
@@ -1891,6 +1892,27 @@ void ip_to_string (IPaddr_t x, char *s)
 		 (int) ((x >> 16) & 0xff),
 		 (int) ((x >> 8) & 0xff), (int) ((x >> 0) & 0xff)
 	);
+}
+
+IPaddr_t string_to_ip(char *s)
+{
+	IPaddr_t addr;
+	char *e;
+	int i;
+
+	if (s == NULL)
+		return(0);
+
+	for (addr=0, i=0; i<4; ++i) {
+		ulong val = s ? simple_strtoul(s, &e, 10) : 0;
+		addr <<= 8;
+		addr |= (val & 0xFF);
+		if (s) {
+			s = (*e) ? e+1 : e;
+		}
+	}
+
+	return (htonl(addr));
 }
 
 void VLAN_to_string(ushort x, char *s)
@@ -1919,6 +1941,11 @@ ushort string_to_VLAN(char *s)
 		id = (ushort)simple_strtoul(s, NULL, 10);
 
 	return htons(id);
+}
+
+IPaddr_t getenv_IPaddr (char *var)
+{
+	return (string_to_ip(getenv(var)));
 }
 
 ushort getenv_VLAN(char *var)

@@ -34,7 +34,7 @@
 #if defined(CONFIG_CMD_JFFS2) && defined(CONFIG_CMD_MTDPARTS)
 #include <jffs2/jffs2.h>
 
-/* partition handling routines */
+/* parition handling routines */
 int mtdparts_init(void);
 int mtd_id_parse(const char *id, const char **ret_id, u8 *dev_type, u8 *dev_num);
 int find_dev_and_part(const char *id, struct mtd_device **dev,
@@ -287,7 +287,7 @@ flash_fill_sect_ranges (ulong addr_first, ulong addr_last,
 }
 #endif /* CONFIG_SYS_NO_FLASH */
 
-int do_flinfo ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_flinfo ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 #ifndef CONFIG_SYS_NO_FLASH
 	ulong bank;
@@ -319,7 +319,7 @@ int do_flinfo ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 #ifndef CONFIG_SYS_NO_FLASH
 	flash_info_t *info;
@@ -332,8 +332,10 @@ int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 	int rcode = 0;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	if (strcmp(argv[1], "all") == 0) {
 		for (bank=1; bank<=CONFIG_SYS_MAX_FLASH_BANKS; ++bank) {
@@ -366,7 +368,7 @@ int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				addr_first = part->offset + info->start[0];
 				addr_last = addr_first + part->size - 1;
 
-				printf ("Erase Flash Partition %s, "
+				printf ("Erase Flash Parition %s, "
 						"bank %ld, 0x%08lx - 0x%08lx ",
 						argv[1], bank, addr_first,
 						addr_last);
@@ -381,8 +383,10 @@ int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 #endif
 
-	if (argc != 3)
-		return cmd_usage(cmdtp);
+	if (argc != 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	if (strcmp(argv[1], "bank") == 0) {
 		bank = simple_strtoul(argv[2], NULL, 16);
@@ -402,8 +406,10 @@ int do_flerase (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return 1;
 	}
 
-	if (addr_first >= addr_last)
-		return cmd_usage(cmdtp);
+	if (addr_first >= addr_last) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	rcode = flash_sect_erase(addr_first, addr_last);
 	return rcode;
@@ -455,7 +461,7 @@ int flash_sect_erase (ulong addr_first, ulong addr_last)
 }
 #endif /* CONFIG_SYS_NO_FLASH */
 
-int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 #ifndef CONFIG_SYS_NO_FLASH
 	flash_info_t *info;
@@ -476,15 +482,19 @@ int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int p;
 	int rcode = 0;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
-	if (strcmp(argv[1], "off") == 0)
+	if (strcmp(argv[1], "off") == 0) {
 		p = 0;
-	else if (strcmp(argv[1], "on") == 0)
+	} else if (strcmp(argv[1], "on") == 0) {
 		p = 1;
-	else
-		return cmd_usage(cmdtp);
+	} else {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 #ifdef CONFIG_HAS_DATAFLASH
 	if ((strcmp(argv[2], "all") != 0) && (strcmp(argv[2], "bank") != 0)) {
@@ -566,7 +576,7 @@ int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				addr_first = part->offset + info->start[0];
 				addr_last = addr_first + part->size - 1;
 
-				printf ("%sProtect Flash Partition %s, "
+				printf ("%sProtect Flash Parition %s, "
 						"bank %ld, 0x%08lx - 0x%08lx\n",
 						p ? "" : "Un", argv[1],
 						bank, addr_first, addr_last);
@@ -582,8 +592,10 @@ int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 #endif
 
-	if (argc != 4)
-		return cmd_usage(cmdtp);
+	if (argc != 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	if (strcmp(argv[2], "bank") == 0) {
 		bank = simple_strtoul(argv[3], NULL, 16);
@@ -622,9 +634,10 @@ int do_protect (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return 1;
 	}
 
-	if (addr_first >= addr_last)
-		return cmd_usage(cmdtp);
-
+	if (addr_first >= addr_last) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 	rcode = flash_sect_protect (p, addr_first, addr_last);
 #endif /* CONFIG_SYS_NO_FLASH */
 	return rcode;

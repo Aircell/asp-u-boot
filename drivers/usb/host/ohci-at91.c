@@ -32,32 +32,22 @@
 
 int usb_cpu_init(void)
 {
-	at91_pmc_t *pmc	= (at91_pmc_t *)AT91_PMC_BASE;
 
 #if defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
     defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20) || \
     defined(CONFIG_AT91SAM9261)
 	/* Enable PLLB */
-	writel(get_pllb_init(), &pmc->pllbr);
-	while ((readl(&pmc->sr) & AT91_PMC_LOCKB) != AT91_PMC_LOCKB)
+	at91_sys_write(AT91_CKGR_PLLBR, get_pllb_init());
+	while ((at91_sys_read(AT91_PMC_SR) & AT91_PMC_LOCKB) != AT91_PMC_LOCKB)
 		;
-#elif defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45)
-	/* Enable UPLL */
-	writel(readl(&pmc->uckr) | AT91_PMC_UPLLEN | AT91_PMC_BIASEN,
-		&pmc->uckr);
-	while ((readl(&pmc->sr) & AT91_PMC_LOCKU) != AT91_PMC_LOCKU)
-		;
-
-	/* Select PLLA as input clock of OHCI */
-	writel(AT91_PMC_USBS_USB_UPLL | AT91_PMC_USBDIV_10, &pmc->usb);
 #endif
 
 	/* Enable USB host clock. */
-	writel(1 << AT91_ID_UHP, &pmc->pcer);
+	at91_sys_write(AT91_PMC_PCER, 1 << AT91_ID_UHP);
 #ifdef CONFIG_AT91SAM9261
-	writel(AT91_PMC_UHP | AT91_PMC_HCK0, &pmc->scer);
+	at91_sys_write(AT91_PMC_SCER, AT91_PMC_UHP | AT91_PMC_HCK0);
 #else
-	writel(AT91_PMC_UHP, &pmc->scer);
+	at91_sys_write(AT91_PMC_SCER, AT91_PMC_UHP);
 #endif
 
 	return 0;
@@ -65,26 +55,19 @@ int usb_cpu_init(void)
 
 int usb_cpu_stop(void)
 {
-	at91_pmc_t *pmc	= (at91_pmc_t *)AT91_PMC_BASE;
-
 	/* Disable USB host clock. */
-	writel(1 << AT91_ID_UHP, &pmc->pcdr);
+	at91_sys_write(AT91_PMC_PCDR, 1 << AT91_ID_UHP);
 #ifdef CONFIG_AT91SAM9261
-	writel(AT91_PMC_UHP | AT91_PMC_HCK0, &pmc->scdr);
+	at91_sys_write(AT91_PMC_SCDR, AT91_PMC_UHP | AT91_PMC_HCK0);
 #else
-	writel(AT91_PMC_UHP, &pmc->scdr);
+	at91_sys_write(AT91_PMC_SCDR, AT91_PMC_UHP);
 #endif
 
 #if defined(CONFIG_AT91CAP9) || defined(CONFIG_AT91SAM9260) || \
     defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91SAM9G20)
 	/* Disable PLLB */
-	writel(0, &pmc->pllbr);
-	while ((readl(&pmc->sr) & AT91_PMC_LOCKB) != 0)
-		;
-#elif defined(CONFIG_AT91SAM9G45) || defined(CONFIG_AT91SAM9M10G45)
-	/* Disable UPLL */
-	writel(readl(&pmc->uckr) & (~AT91_PMC_UPLLEN), &pmc->uckr);
-	while ((readl(&pmc->sr) & AT91_PMC_LOCKU) == AT91_PMC_LOCKU)
+	at91_sys_write(AT91_CKGR_PLLBR, 0);
+	while ((at91_sys_read(AT91_PMC_SR) & AT91_PMC_LOCKB) != 0)
 		;
 #endif
 

@@ -20,6 +20,8 @@
 
 #define BOOTP_VENDOR_MAGIC	0x63825363	/* RFC1048 Magic Cookie		*/
 
+#if defined(CONFIG_CMD_NET)
+
 #define TIMEOUT		5000UL	/* Milliseconds before trying BOOTP again */
 #ifndef CONFIG_NET_RETRY_COUNT
 # define TIMEOUT_COUNT	5		/* # of timeouts before giving up  */
@@ -946,3 +948,5 @@ void DhcpRequest(void)
 	BootpRequest();
 }
 #endif	/* CONFIG_CMD_DHCP */
+
+#endif	/* CONFIG_CMD_NET */

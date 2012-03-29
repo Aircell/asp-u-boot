@@ -131,7 +131,7 @@ static void inka_digio_set_output(unsigned int state, int which)
 }
 
 static int do_inkadiag_io(cmd_tbl_t *cmdtp, int flag, int argc,
-			  char * const argv[]) {
+			  char *argv[]) {
 	unsigned int state, val;
 
 	switch (argc) {
@@ -168,7 +168,8 @@ static int do_inkadiag_io(cmd_tbl_t *cmdtp, int flag, int argc,
 		printf("exit code: 0x%X\n", val);
 		return 0;
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		break;
 	}
 
 	return -1;
@@ -236,15 +237,17 @@ static int ser_getc(volatile struct mpc5xxx_psc *psc)
 }
 
 static int do_inkadiag_serial(cmd_tbl_t *cmdtp, int flag, int argc,
-			      char * const argv[]) {
+			      char *argv[]) {
 	volatile struct NS16550 *uart;
 	volatile struct mpc5xxx_psc *psc;
 	unsigned int num, mode;
 	int combrd, baudrate, i, j, len;
 	int address;
 
-	if (argc < 5)
-		return cmd_usage(cmdtp);
+	if (argc < 5) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	argc--;
 	argv++;
@@ -386,13 +389,15 @@ static void buzzer_turn_off(void)
 }
 
 static int do_inkadiag_buzzer(cmd_tbl_t *cmdtp, int flag, int argc,
-			      char * const argv[]) {
+			      char *argv[]) {
 
 	unsigned int period, freq;
 	int prev, i;
 
-	if (argc != 3)
-		return cmd_usage(cmdtp);
+	if (argc != 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	argc--;
 	argv++;
@@ -430,7 +435,7 @@ static int do_inkadiag_buzzer(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int do_inkadiag_help(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+static int do_inkadiag_help(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 cmd_tbl_t cmd_inkadiag_sub[] = {
 	U_BOOT_CMD_MKENT(io, 1, 1, do_inkadiag_io, "read digital input",
@@ -445,10 +450,10 @@ cmd_tbl_t cmd_inkadiag_sub[] = {
 };
 
 static int do_inkadiag_help(cmd_tbl_t *cmdtp, int flag,
-			    int argc, char * const argv[]) {
+			    int argc, char *argv[]) {
 	extern int _do_help (cmd_tbl_t *cmd_start, int cmd_items,
 			     cmd_tbl_t *cmdtp, int flag,
-			     int argc, char * const argv[]);
+			     int argc, char *argv[]);
 	/* do_help prints command name - we prepend inkadiag to our subcommands! */
 #ifdef CONFIG_SYS_LONGHELP
 	puts ("inkadiag ");
@@ -458,7 +463,7 @@ static int do_inkadiag_help(cmd_tbl_t *cmdtp, int flag,
 }
 
 static int do_inkadiag(cmd_tbl_t *cmdtp, int flag, int argc,
-		       char * const argv[]) {
+		       char *argv[]) {
 	cmd_tbl_t *c;
 
 	c = find_cmd_tbl(argv[1], &cmd_inkadiag_sub[0], ARRAY_SIZE(cmd_inkadiag_sub));
@@ -469,7 +474,8 @@ static int do_inkadiag(cmd_tbl_t *cmdtp, int flag, int argc,
 		return c->cmd(c, flag, argc, argv);
 	} else {
 		/* Unrecognized command */
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 }
 

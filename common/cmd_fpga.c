@@ -44,6 +44,7 @@
 #endif
 
 /* Local functions */
+static void fpga_usage (cmd_tbl_t * cmdtp);
 static int fpga_get_op (char *opstr);
 
 /* Local defines */
@@ -155,7 +156,7 @@ int fpga_loadbitstream(unsigned long dev, char* fpgadata, size_t size)
  * If there is no data addr field, the fpgadata environment variable is used.
  * The info command requires no data address field.
  */
-int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	int op, dev = FPGA_INVALID_DEVICE;
 	size_t data_size = 0;
@@ -231,7 +232,8 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 
 	switch (op) {
 	case FPGA_NONE:
-		return cmd_usage(cmdtp);
+		fpga_usage (cmdtp);
+		break;
 
 	case FPGA_INFO:
 		rc = fpga_info (dev);
@@ -310,9 +312,15 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 
 	default:
 		printf ("Unknown operation\n");
-		return cmd_usage(cmdtp);
+		fpga_usage (cmdtp);
+		break;
 	}
 	return (rc);
+}
+
+static void fpga_usage (cmd_tbl_t * cmdtp)
+{
+	cmd_usage(cmdtp);
 }
 
 /*

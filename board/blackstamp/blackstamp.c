@@ -13,7 +13,7 @@
 
 #include <common.h>
 #include <netdev.h>
-#include <asm/gpio.h>
+#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -24,11 +24,24 @@ int checkboard(void)
 	return 0;
 }
 
+phys_size_t initdram(int board_type)
+{
+	gd->bd->bi_memstart = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_memsize = CONFIG_SYS_MAX_RAM_SIZE;
+	return gd->bd->bi_memsize;
+}
+
 #ifdef SHARED_RESOURCES
 void swap_to(int device_id)
 {
-	gpio_request(GPIO_PF0, "eth_flash_swap");
-	gpio_direction_output(GPIO_PF0, device_id == ETHERNET);
+	bfin_write_FIO_DIR(bfin_read_FIO_DIR() | PF0);
+	SSYNC();
+	if (device_id == ETHERNET)
+		bfin_write_FIO_FLAG_S(PF0);
+	else if (device_id == FLASH)
+		bfin_write_FIO_FLAG_C(PF0);
+	else
+		printf("Unknown device to switch\n");
 	SSYNC();
 }
 #endif

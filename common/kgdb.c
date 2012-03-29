@@ -1,4 +1,4 @@
-/* taken from arch/powerpc/kernel/ppc-stub.c */
+/* taken from arch/ppc/kernel/ppc-stub.c */
 
 /****************************************************************************
 
@@ -132,20 +132,11 @@ hex(unsigned char ch)
 static unsigned char *
 mem2hex(char *mem, char *buf, int count)
 {
-	char *tmp;
 	unsigned char ch;
 
-	/*
-	 * We use the upper half of buf as an intermediate buffer for the
-	 * raw memory copy.  Hex conversion will work against this one.
-	 */
-	tmp = buf + count;
 	longjmp_on_fault = 1;
-
-	memcpy(tmp, mem, count);
-
 	while (count-- > 0) {
-		ch = *tmp++;
+		ch = *mem++;
 		*buf++ = hexchars[ch >> 4];
 		*buf++ = hexchars[ch & 0xf];
 	}
@@ -160,33 +151,21 @@ mem2hex(char *mem, char *buf, int count)
 static char *
 hex2mem(char *buf, char *mem, int count)
 {
-	int hexValue;
-	char *tmp_raw, *tmp_hex;
-
-	/*
-	 * We use the upper half of buf as an intermediate buffer for the
-	 * raw memory that is converted from hex.
-	 */
-	tmp_raw = buf + count * 2;
-	tmp_hex = tmp_raw - 1;
+	int i, hexValue;
+	unsigned char ch;
+	char *mem_start = mem;
 
 	longjmp_on_fault = 1;
-	while (tmp_hex >= buf) {
-		tmp_raw--;
-		hexValue = hex(*tmp_hex--);
-		if (hexValue < 0)
+	for (i=0; i<count; i++) {
+		if ((hexValue = hex(*buf++)) < 0)
 			kgdb_error(KGDBERR_NOTHEXDIG);
-		*tmp_raw = hexValue;
-		hexValue = hex(*tmp_hex--);
-		if (hexValue < 0)
+		ch = hexValue << 4;
+		if ((hexValue = hex(*buf++)) < 0)
 			kgdb_error(KGDBERR_NOTHEXDIG);
-		*tmp_raw |= hexValue << 4;
-
+		ch |= hexValue;
+		*mem++ = ch;
 	}
-
-	memcpy(mem, tmp_raw, count);
-
-	kgdb_flush_cache_range((void *)mem, (void *)(mem+count));
+	kgdb_flush_cache_range((void *)mem_start, (void *)(mem - 1));
 	longjmp_on_fault = 0;
 
 	return buf;
@@ -584,7 +563,7 @@ breakpoint(void)
 }
 
 int
-do_kgdb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+do_kgdb(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     printf("Entering KGDB mode via exception handler...\n\n");
     kgdb_breakpoint(argc - 1, argv + 1);

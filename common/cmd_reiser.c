@@ -47,7 +47,7 @@
 #define PRINTF(fmt,args...)
 #endif
 
-int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *filename = "/";
 	int dev=0;
@@ -56,9 +56,10 @@ int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	block_dev_desc_t *dev_desc=NULL;
 	int part_length;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
-
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 	dev = (int)simple_strtoul (argv[2], &ep, 16);
 	dev_desc = get_dev(argv[1],dev);
 
@@ -109,7 +110,7 @@ U_BOOT_CMD(
 /******************************************************************************
  * Reiserfs boot command intepreter. Derived from diskboot
  */
-int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *filename = NULL;
 	char *ep;
@@ -149,7 +150,8 @@ int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		break;
 
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	if (!filename) {

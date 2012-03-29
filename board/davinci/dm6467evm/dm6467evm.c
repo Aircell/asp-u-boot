@@ -18,8 +18,6 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <nand.h>
-#include <asm/arch/nand_defs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -30,12 +28,3 @@ int board_init(void)
 
 	return 0;
 }
-
-#ifdef CONFIG_NAND_DAVINCI
-int board_nand_init(struct nand_chip *nand)
-{
-	davinci_nand_init(nand);
-
-	return 0;
-}
-#endif

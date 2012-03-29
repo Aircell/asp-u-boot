@@ -100,6 +100,5 @@ typedef int (*Xilinx_busy_fn)( int cookie );
 typedef int (*Xilinx_abort_fn)( int cookie );
 typedef int (*Xilinx_pre_fn)( int cookie );
 typedef int (*Xilinx_post_fn)( int cookie );
-typedef int (*Xilinx_bwr_fn)( void *buf, size_t len, int flush, int cookie );
 
 #endif  /* _XILINX_H_ */

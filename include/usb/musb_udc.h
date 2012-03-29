@@ -51,3 +51,4 @@ int udc_init(void);
 #endif /* CONFIG_USB_TTY */
 
 #endif /* __MUSB_UDC_H__ */
+

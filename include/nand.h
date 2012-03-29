@@ -31,6 +31,7 @@ extern void nand_init(void);
 #include <linux/mtd/nand.h>
 
 extern int board_nand_init(struct nand_chip *nand);
+extern int get_nand_id(unsigned int *mfd_id, unsigned int *dev_id);
 
 typedef struct mtd_info nand_info_t;
 
@@ -112,7 +113,7 @@ typedef struct nand_erase_options nand_erase_options_t;
 int nand_read_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 		       u_char *buffer);
 int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
-			u_char *buffer);
+			u_char *buffer, int withoob, int quiet);
 int nand_erase_opts(nand_info_t *meminfo, const nand_erase_options_t *opts);
 
 #define NAND_LOCK_STATUS_TIGHT	0x01
@@ -123,19 +124,13 @@ int nand_lock( nand_info_t *meminfo, int tight );
 int nand_unlock( nand_info_t *meminfo, ulong start, ulong length );
 int nand_get_lock_status(nand_info_t *meminfo, loff_t offset);
 
+int nand_get_features( nand_info_t *meminfo, uint8_t faddr, uint8_t *features);
+int nand_set_features( nand_info_t *meminfo, uint8_t faddr, uint8_t *features);
+
 #ifdef CONFIG_SYS_NAND_SELECT_DEVICE
 void board_nand_select_device(struct nand_chip *nand, int chip);
 #endif
 
 __attribute__((noreturn)) void nand_boot(void);
 
-#endif
-
-#ifdef CONFIG_ENV_OFFSET_OOB
-#define ENV_OOB_MARKER 0x30425645 /*"EVB0" in little-endian -- offset is stored
-				    as block number*/
-#define ENV_OOB_MARKER_OLD 0x30564e45 /*"ENV0" in little-endian -- offset is
-					stored as byte number */
-#define ENV_OFFSET_SIZE 8
-int get_nand_env_oob(nand_info_t *nand, unsigned long *result);
 #endif

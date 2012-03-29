@@ -152,42 +152,46 @@ int lcd_init(void)
 	return 0;
 }
 
-static int do_lcd_test(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_lcd_test(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	lcd_init();
 	return 0;
 }
 
-static int do_lcd_clear(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_lcd_clear(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	*LCD_CMD_ADDR = 0x01;
 	mdelay(LCD_DELAY_NORMAL_MS);
 	return 0;
 }
-static int do_lcd_puts(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_lcd_puts(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-	if (argc < 2)
-		return cmd_usage(cmdtp);
-
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 	lcd_puts(argv[1]);
 	return 0;
 }
-static int do_lcd_putc(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_lcd_putc(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-	if (argc < 2)
-		return cmd_usage(cmdtp);
-
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 	lcd_putc((char)argv[1][0]);
 	return 0;
 }
-static int do_lcd_cur(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_lcd_cur(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	ulong count;
 	ulong dir;
 	char cur_addr;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	count = simple_strtoul(argv[1], NULL, 16);
 	if (count > 31) {
@@ -352,7 +356,7 @@ void set_phy_normal_mode(void)
 }
 #endif	/* 0 - test only */
 
-static int do_led_test_off(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_led_test_off(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	volatile unsigned int *GpioOr =
 		(volatile unsigned int *)(CONFIG_SYS_PERIPHERAL_BASE + 0x700);
@@ -360,7 +364,7 @@ static int do_led_test_off(cmd_tbl_t * cmdtp, int flag, int argc, char * const a
 	return 0;
 }
 
-static int do_led_test_on(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_led_test_on(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	volatile unsigned int *GpioOr =
 		(volatile unsigned int *)(CONFIG_SYS_PERIPHERAL_BASE + 0x700);

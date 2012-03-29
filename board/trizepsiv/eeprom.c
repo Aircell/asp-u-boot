@@ -25,7 +25,7 @@
 #include <command.h>
 #include <dm9000.h>
 
-static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
 	unsigned int i;
 	u8 data[2];
 
@@ -39,32 +39,39 @@ static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * 
 	return (0);
 }
 
-static int do_write_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+static int do_write_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
 	int offset,value;
 
-	if (argc < 4)
-		return cmd_usage(cmdtp);
+	if (argc < 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	offset=simple_strtoul(argv[2],NULL,16);
 	value=simple_strtoul(argv[3],NULL,16);
 	if (offset > 0x40) {
 		printf("Wrong offset : 0x%x\n",offset);
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 	dm9000_write_srom_word(offset, value);
 	return (0);
 }
 
-int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
-	if (strcmp (argv[1],"read") == 0)
+	if (strcmp (argv[1],"read") == 0) {
 		return (do_read_dm9000_eeprom(cmdtp,flag,argc,argv));
-	else if (strcmp (argv[1],"write") == 0)
+	} else if (strcmp (argv[1],"write") == 0) {
 		return (do_write_dm9000_eeprom(cmdtp,flag,argc,argv));
-	else
-		return cmd_usage(cmdtp);
+	} else {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 }
 
 U_BOOT_CMD(

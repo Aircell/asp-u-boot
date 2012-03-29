@@ -304,23 +304,8 @@
 #define TWL4030_PM_RECEIVER_MAINREF_TYPE		0xF0
 #define TWL4030_PM_RECEIVER_MAINREF_REMAP		0xF1
 
-/* Voltage Selection in PM Receiver Module */
-#define TWL4030_PM_RECEIVER_VAUX2_VSEL_18		0x05
-#define TWL4030_PM_RECEIVER_VAUX3_VSEL_28		0x03
-#define TWL4030_PM_RECEIVER_VPLL2_VSEL_18		0x05
-#define TWL4030_PM_RECEIVER_VDAC_VSEL_18		0x03
-#define TWL4030_PM_RECEIVER_VMMC1_VSEL_30		0x02
-
-/* Device Selection in PM Receiver Module */
-#define TWL4030_PM_RECEIVER_DEV_GRP_P1			0x20
-#define TWL4030_PM_RECEIVER_DEV_GRP_ALL			0xE0
-
 /* LED */
 #define TWL4030_LED_LEDEN				0xEE
-#define TWL4030_LED_LEDEN_LEDAON			(1 << 0)
-#define TWL4030_LED_LEDEN_LEDBON			(1 << 1)
-#define TWL4030_LED_LEDEN_LEDAPWM			(1 << 4)
-#define TWL4030_LED_LEDEN_LEDBPWM			(1 << 5)
 
 /* Keypad */
 #define TWL4030_KEYPAD_KEYP_CTRL_REG			0xD2
@@ -355,6 +340,22 @@
 #define TWL4030_KEYPAD_CTRL_LK_EN			(1 << 2)
 #define TWL4030_KEYPAD_CTRL_SOFTMODEN			(1 << 1)
 #define TWL4030_KEYPAD_CTRL_SOFT_NRST			(1 << 0)
+
+/* Main charge */
+#define TWL4030_MAIN_CHARGE_BCIMFKEY			0x85
+#define TWL4030_MAIN_CHARGE_BCIMFEN1			0x86
+#define TWL4030_MAIN_CHARGE_BCIMFTH1			0x8A
+
+#define TWL4030_MAIN_CHARGE_BCIMFKEY_MFKEY1		0x57
+#define TWL4030_MAIN_CHARGE_BCIMFKEY_MFKEY5		0xD2
+#define TWL4030_MAIN_CHARGE_BCIMFEN1_VBATOV1EN		(1 << 7)
+#define TWL4030_MAIN_CHARGE_BCIMFTH1_VBATOV1TH_MASK	0x0F
+#define TWL4030_MAIN_CHARGE_BCIMFTH1_VBATOV1TH_2636_mV	0x00
+
+/* INTBR */
+#define TWL4030_INTBR_GPBR1				0x91
+#define TWL4030_INTBR_GPBR1_MADC_HFCLK_EN		0x80
+#define TWL4030_INTBR_GPBR1_DEFAULT_MADC_CLK_EN		0x10
 
 /* USB */
 #define TWL4030_USB_VENDOR_ID_LO			0x00
@@ -511,18 +512,17 @@ static inline int twl4030_i2c_read_u8(u8 chip_no, u8 *val, u8 reg)
 
 /* For hardware resetting */
 void twl4030_power_reset_init(void);
-/* For setting device group and voltage */
-void twl4030_pmrecv_vsel_cfg(u8 vsel_reg, u8 vsel_val,
-			     u8 dev_grp, u8 dev_grp_sel);
 /* For initializing power device */
 void twl4030_power_init(void);
 /* For initializing mmc power */
 void twl4030_power_mmc_init(void);
+/* For enabling charging */
+extern int twl4030_enable_charging(void);
 
 /*
  * LED
  */
-void twl4030_led_init(unsigned char ledon_mask);
+void twl4030_led_init(void);
 
 /*
  * USB

@@ -29,7 +29,8 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Prototypes */
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int gunzip(void *, int, unsigned char *, unsigned long *);
+int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 /* predefine these here for FPGA programming (before including fpga.c) */
 #define SET_FPGA(data)	*IXP425_GPIO_GPOUTR = (data)
@@ -210,12 +211,14 @@ int do_fpga_boot(unsigned char *fpgadata)
 	return (0);
 }
 
-int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_fpga(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 

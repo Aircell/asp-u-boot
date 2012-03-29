@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 
+extern int errno;
+
 #if !defined(__WIN32__) && !defined(__MINGW32__)
 # include <sys/mman.h>
 #endif
@@ -53,7 +55,6 @@ typedef unsigned int  uint;
 typedef uint8_t __u8;
 typedef uint16_t __u16;
 typedef uint32_t __u32;
-typedef unsigned int uint;
 
 #define uswap_16(x) \
 	((((x) & 0xff00) >> 8) | \
@@ -123,8 +124,5 @@ typedef unsigned int            uintptr_t;
 
 /* compiler options */
 #define uninitialized_var(x)		x = x
-
-#define likely(x)	__builtin_expect(!!(x), 1)
-#define unlikely(x)	__builtin_expect(!!(x), 0)
 
 #endif

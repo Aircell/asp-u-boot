@@ -65,7 +65,6 @@ struct serial_device zoom2_serial_device##n =	\
 	N(n),					\
 	U(n),					\
 	quad_init_##n,				\
-	NULL,					\
 	quad_setbrg_##n,			\
 	quad_getc_##n,				\
 	quad_tstc_##n,				\

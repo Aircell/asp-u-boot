@@ -30,9 +30,6 @@
 #ifdef CONFIG_KIRKWOOD
 #include <asm/arch/kirkwood.h>
 #endif
-#ifdef CONFIG_ORION5X
-#include <asm/arch/orion5x.h>
-#endif
 
 #if defined (CONFIG_SERIAL_MULTI)
 #include <serial.h>
@@ -118,7 +115,6 @@ static NS16550_t serial_ports[4] = {
 	name,\
 	bus,\
 	eserial##port##_init,\
-	NULL,\
 	eserial##port##_setbrg,\
 	eserial##port##_getc,\
 	eserial##port##_tstc,\
@@ -189,6 +185,11 @@ int serial_init (void)
 }
 #endif
 
+#if 1
+int serial_outbuf_cnt = 0;
+char serial_outbuf[4096];
+#endif
+
 void
 _serial_putc(const char c,const int port)
 {
@@ -196,6 +197,10 @@ _serial_putc(const char c,const int port)
 		NS16550_putc(PORT, '\r');
 
 	NS16550_putc(PORT, c);
+#if 1
+	serial_outbuf[serial_outbuf_cnt % sizeof(serial_outbuf)] = c;
+	serial_outbuf_cnt++;
+#endif
 }
 
 void

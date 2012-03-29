@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2010 Freescale Semiconductor, Inc.
+ * Copyright 2007 Freescale Semiconductor, Inc.
  * York Sun <yorksun@freescale.com>
  *
  * FSL DIU Framebuffer driver
@@ -26,7 +26,6 @@
 #include <common.h>
 #include <i2c.h>
 #include <malloc.h>
-#include <asm/io.h>
 
 #include "fsl_diu_fb.h"
 
@@ -50,22 +49,6 @@ struct fb_videomode {
 #define FB_SYNC_VERT_HIGH_ACT	2	/* vertical sync high active	*/
 #define FB_SYNC_COMP_HIGH_ACT	8	/* composite sync high active   */
 #define FB_VMODE_NONINTERLACED  0	/* non interlaced */
-
-/* This setting is used for the ifm pdm360ng with PRIMEVIEW PM070WL3 */
-static struct fb_videomode fsl_diu_mode_800 = {
-	.refresh	= 60,
-	.xres		= 800,
-	.yres		= 480,
-	.pixclock	= 31250,
-	.left_margin	= 86,
-	.right_margin	= 42,
-	.upper_margin	= 33,
-	.lower_margin	= 10,
-	.hsync_len	= 128,
-	.vsync_len	= 2,
-	.sync		= 0,
-	.vmode		= FB_VMODE_NONINTERLACED
-};
 
 /*
  * These parameters give default parameters
@@ -227,14 +210,9 @@ int fsl_diu_init(int xres,
 
 	disable_lcdc();
 
-	switch (xres) {
-	case 800:
-		fsl_diu_mode_db = &fsl_diu_mode_800;
-		break;
-	case 1280:
+	if (xres == 1280) {
 		fsl_diu_mode_db = &fsl_diu_mode_1280;
-		break;
-	default:
+	} else {
 		fsl_diu_mode_db = &fsl_diu_mode_1024;
 	}
 
@@ -268,9 +246,9 @@ int fsl_diu_init(int xres,
 
 	memset(info->screen_base, 0, info->smem_len);
 
-	out_be32(&dr.diu_reg->desc[0], (int)&dummy_ad);
-	out_be32(&dr.diu_reg->desc[1], (int)&dummy_ad);
-	out_be32(&dr.diu_reg->desc[2], (int)&dummy_ad);
+	dr.diu_reg->desc[0] = (unsigned int) &dummy_ad;
+	dr.diu_reg->desc[1] = (unsigned int) &dummy_ad;
+	dr.diu_reg->desc[2] = (unsigned int) &dummy_ad;
 	debug("dummy dr.diu_reg->desc[0] = 0x%x\n", dr.diu_reg->desc[0]);
 	debug("dummy desc[0] = 0x%x\n", hw->desc[0]);
 
@@ -332,26 +310,26 @@ int fsl_diu_init(int xres,
 
 	/* Program DIU registers */
 
-	out_be32(&hw->gamma, (int)gamma.paddr);
-	out_be32(&hw->cursor, (int)cursor.paddr);
-	out_be32(&hw->bgnd, 0x007F7F7F);
-	out_be32(&hw->bgnd_wb, 0);				/* BGND_WB */
-	out_be32(&hw->disp_size, var->yres << 16 | var->xres);	/* DISP SIZE */
-	out_be32(&hw->wb_size, 0);				/* WB SIZE */
-	out_be32(&hw->wb_mem_addr, 0);				/* WB MEM ADDR */
-	out_be32(&hw->hsyn_para, var->left_margin << 22 |	/* BP_H */
+	hw->gamma = (unsigned int) gamma.paddr;
+	hw->cursor= (unsigned int) cursor.paddr;
+	hw->bgnd = 0x007F7F7F;				/* BGND */
+	hw->bgnd_wb = 0;				/* BGND_WB */
+	hw->disp_size = var->yres << 16 | var->xres;	/* DISP SIZE */
+	hw->wb_size = 0;				/* WB SIZE */
+	hw->wb_mem_addr = 0;				/* WB MEM ADDR */
+	hw->hsyn_para = var->left_margin << 22 |	/* BP_H */
 			var->hsync_len << 11   |	/* PW_H */
-			var->right_margin);		/* FP_H */
-
-	out_be32(&hw->vsyn_para, var->upper_margin << 22 |	/* BP_V */
+			var->right_margin;		/* FP_H */
+	hw->vsyn_para = var->upper_margin << 22 |	/* BP_V */
 			var->vsync_len << 11    |	/* PW_V  */
-			var->lower_margin);		/* FP_V  */
+			var->lower_margin;		/* FP_V  */
 
-	out_be32(&hw->syn_pol, 0);			/* SYNC SIGNALS POLARITY */
-	out_be32(&hw->thresholds, 0x00037800);		/* The Thresholds */
-	out_be32(&hw->int_status, 0);			/* INTERRUPT STATUS */
-	out_be32(&hw->int_mask, 0);			/* INT MASK */
-	out_be32(&hw->plut, 0x01F5F666);
+	hw->syn_pol = 0;			/* SYNC SIGNALS POLARITY */
+	hw->thresholds = 0x00037800;		/* The Thresholds */
+	hw->int_status = 0;			/* INTERRUPT STATUS */
+	hw->int_mask = 0;			/* INT MASK */
+	hw->plut = 0x01F5F666;
+
 	/* Pixel Clock configuration */
 	debug("DIU pixclock in ps - %d\n", var->pixclock);
 	diu_set_pixel_clock(var->pixclock);
@@ -391,8 +369,8 @@ static int fsl_diu_enable_panel(struct fb_info *info)
 	struct diu_ad *ad = &fsl_diu_fb_ad;
 
 	debug("Entered: enable_panel\n");
-	if (in_be32(&hw->desc[0]) != (unsigned)ad)
-		out_be32(&hw->desc[0], (unsigned)ad);
+	if (hw->desc[0] != (unsigned int)ad)
+		hw->desc[0] = (unsigned int)ad;
 	debug("desc[0] = 0x%x\n", hw->desc[0]);
 	return 0;
 }
@@ -402,8 +380,8 @@ static int fsl_diu_disable_panel(struct fb_info *info)
 	struct diu *hw = dr.diu_reg;
 
 	debug("Entered: disable_panel\n");
-	if (in_be32(&hw->desc[0]) != (unsigned)&dummy_ad)
-		out_be32(&hw->desc[0], (unsigned)&dummy_ad);
+	if (hw->desc[0] != (unsigned int)&dummy_ad)
+		hw->desc[0] = (unsigned int)&dummy_ad;
 	return 0;
 }
 
@@ -444,7 +422,7 @@ static void enable_lcdc(void)
 
 	debug("Entered: enable_lcdc, fb_enabled = %d\n", fb_enabled);
 	if (!fb_enabled) {
-		out_be32(&hw->diu_mode, dr.mode);
+		hw->diu_mode = dr.mode;
 		fb_enabled++;
 	}
 	debug("diu_mode = %d\n", hw->diu_mode);
@@ -456,7 +434,7 @@ static void disable_lcdc(void)
 
 	debug("Entered: disable_lcdc, fb_enabled = %d\n", fb_enabled);
 	if (fb_enabled) {
-		out_be32(&hw->diu_mode, 0);
+		hw->diu_mode = 0;
 		fb_enabled = 0;
 	}
 }
@@ -541,9 +519,9 @@ int fsl_diu_display_bmp(unsigned char *bmp,
 				b = *bitmap++;
 				for (k = 0; k < 8; k++) {
 					if (b & 0x80)
-						*fb_t++ = palette[1];
+						*fb_t = palette[1];
 					else
-						*fb_t++ = palette[0];
+						*fb_t = palette[0];
 					b = b << 1;
 				}
 			}

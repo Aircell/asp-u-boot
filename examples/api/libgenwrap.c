@@ -23,7 +23,7 @@
  *
  *
  * This is is a set of wrappers/stubs that allow to use certain routines from
- * U-Boot's lib in the standalone app. This way way we can re-use
+ * U-Boot's lib_generic in the standalone app. This way way we can re-use
  * existing code e.g. operations on strings and similar.
  *
  */
@@ -37,7 +37,7 @@
 /*
  * printf() and vprintf() are stolen from u-boot/common/console.c
  */
-int printf (const char *fmt, ...)
+void printf (const char *fmt, ...)
 {
 	va_list args;
 	uint i;
@@ -53,10 +53,9 @@ int printf (const char *fmt, ...)
 
 	/* Print the string */
 	ub_puts (printbuffer);
-	return i;
 }
 
-int vprintf (const char *fmt, va_list args)
+void vprintf (const char *fmt, va_list args)
 {
 	uint i;
 	char printbuffer[256];
@@ -68,7 +67,6 @@ int vprintf (const char *fmt, va_list args)
 
 	/* Print the string */
 	ub_puts (printbuffer);
-	return i;
 }
 
 void putc (const char c)
@@ -76,7 +74,7 @@ void putc (const char c)
 	ub_putc(c);
 }
 
-void __udelay(unsigned long usec)
+void udelay(unsigned long usec)
 {
 	ub_udelay(usec);
 }

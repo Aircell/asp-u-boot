@@ -373,7 +373,7 @@ void reset_phy (void)
 #define	PUMA_READ_MODE	0
 #define PUMA_LOAD_MODE	1
 
-int do_puma (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+int do_puma (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr, len;
 
@@ -399,7 +399,8 @@ int do_puma (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	default:
 		break;
 	}
-	return cmd_usage(cmdtp);
+	cmd_usage(cmdtp);
+	return 1;
 }
 
 U_BOOT_CMD (puma, 4, 1, do_puma,

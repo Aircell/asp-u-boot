@@ -141,7 +141,7 @@ fpga_load (int mezz, uchar *addr, ulong size)
 
 /* ------------------------------------------------------------------------- */
 int
-do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	uchar *addr, *save_addr;
 	ulong size;
@@ -272,7 +272,8 @@ do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		break;
 	}
 
-	return cmd_usage(cmdtp);
+	cmd_usage(cmdtp);
+	return 1;
 }
 U_BOOT_CMD(
 	fpga,	6,	1,	do_fpga,
@@ -300,7 +301,7 @@ U_BOOT_CMD(
 );
 /* ------------------------------------------------------------------------- */
 int
-do_eecl (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+do_eecl (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	uchar data[HYMOD_EEPROM_SIZE];
 	uint addr = CONFIG_SYS_I2C_EEPROM_ADDR;
@@ -323,7 +324,8 @@ do_eecl (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		/* fall through ... */
 
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	memset (data, 0, HYMOD_EEPROM_SIZE);
@@ -344,7 +346,7 @@ U_BOOT_CMD(
 /* ------------------------------------------------------------------------- */
 
 int
-do_htest (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+do_htest (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 #if 0
 	int rc;

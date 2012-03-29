@@ -41,7 +41,6 @@
 #include <command.h>
 #include <net.h>
 #include <malloc.h>
-#include <linux/mii.h>
 #include "ax88180.h"
 
 /*
@@ -51,9 +50,9 @@
  */
 static void ax88180_rx_handler (struct eth_device *dev);
 static int ax88180_phy_initial (struct eth_device *dev);
-static void ax88180_media_config (struct eth_device *dev);
-static unsigned long get_CicadaPHY_media_mode (struct eth_device *dev);
-static unsigned long get_MarvellPHY_media_mode (struct eth_device *dev);
+static void ax88180_meidia_config (struct eth_device *dev);
+static unsigned long get_CicadaPHY_meida_mode (struct eth_device *dev);
+static unsigned long get_MarvellPHY_meida_mode (struct eth_device *dev);
 static unsigned short ax88180_mdio_read (struct eth_device *dev,
 					 unsigned long regaddr);
 static void ax88180_mdio_write (struct eth_device *dev,
@@ -113,10 +112,10 @@ static int ax88180_phy_reset (struct eth_device *dev)
 {
 	unsigned short delay_cnt = 500;
 
-	ax88180_mdio_write (dev, MII_BMCR, (BMCR_RESET | BMCR_ANENABLE));
+	ax88180_mdio_write (dev, BMCR, (PHY_RESET | AUTONEG_EN));
 
 	/* Wait for the reset to complete, or time out (500 ms) */
-	while (ax88180_mdio_read (dev, MII_BMCR) & BMCR_RESET) {
+	while (ax88180_mdio_read (dev, BMCR) & PHY_RESET) {
 		udelay (1000);
 		if (--delay_cnt == 0) {
 			printf ("Failed to reset PHY!\n");
@@ -256,78 +255,52 @@ static int ax88180_phy_initial (struct eth_device *dev)
 {
 	struct ax88180_private *priv = (struct ax88180_private *)dev->priv;
 	unsigned long tmp_regval;
-	unsigned short phyaddr;
 
-	/* Search for first avaliable PHY chipset */
-#ifdef CONFIG_PHY_ADDR
-	phyaddr = CONFIG_PHY_ADDR;
-#else
-	for (phyaddr = 0; phyaddr < 32; ++phyaddr)
-#endif
-	{
-		priv->PhyAddr = phyaddr;
-		priv->PhyID0 = ax88180_mdio_read(dev, MII_PHYSID1);
-		priv->PhyID1 = ax88180_mdio_read(dev, MII_PHYSID2);
+	/* Check avaliable PHY chipset  */
+	priv->PhyAddr = MARVELL_88E1111_PHYADDR;
+	priv->PhyID0 = ax88180_mdio_read (dev, PHYIDR0);
 
-		switch (priv->PhyID0) {
-		case MARVELL_ALASKA_PHYSID0:
-			debug("ax88180: Found Marvell Alaska PHY family."
-			      " (PHY Addr=0x%x)\n", priv->PhyAddr);
+	if (priv->PhyID0 == MARVELL_88E1111_PHYIDR0) {
 
-			switch (priv->PhyID1) {
-			case MARVELL_88E1118_PHYSID1:
-				ax88180_mdio_write(dev, M88E1118_PAGE_SEL, 2);
-				ax88180_mdio_write(dev, M88E1118_CR,
-					M88E1118_CR_DEFAULT);
-				ax88180_mdio_write(dev, M88E1118_PAGE_SEL, 3);
-				ax88180_mdio_write(dev, M88E1118_LEDCTL,
-					M88E1118_LEDCTL_DEFAULT);
-				ax88180_mdio_write(dev, M88E1118_LEDMIX,
-					M88E1118_LEDMIX_LED050 | M88E1118_LEDMIX_LED150 | 0x15);
-				ax88180_mdio_write(dev, M88E1118_PAGE_SEL, 0);
-			default: /* Default to 88E1111 Phy */
-				tmp_regval = ax88180_mdio_read(dev, M88E1111_EXT_SSR);
-				if ((tmp_regval & HWCFG_MODE_MASK) != RGMII_COPPER_MODE)
-					ax88180_mdio_write(dev, M88E1111_EXT_SCR,
-						DEFAULT_EXT_SCR);
-			}
+		debug ("ax88180: Found Marvell 88E1111 PHY."
+		       " (PHY Addr=0x%x)\n", priv->PhyAddr);
 
-			if (ax88180_phy_reset(dev) < 0)
+		tmp_regval = ax88180_mdio_read (dev, M88_EXT_SSR);
+		if ((tmp_regval & HWCFG_MODE_MASK) == RGMII_COPPER_MODE) {
+
+			ax88180_mdio_write (dev, M88_EXT_SCR, DEFAULT_EXT_SCR);
+			if (ax88180_phy_reset (dev) < 0)
 				return 0;
-			ax88180_mdio_write(dev, M88_IER, LINK_CHANGE_INT);
+			ax88180_mdio_write (dev, M88_IER, LINK_CHANGE_INT);
+		}
+	} else {
 
-			return 1;
+		priv->PhyAddr = CICADA_CIS8201_PHYADDR;
+		priv->PhyID0 = ax88180_mdio_read (dev, PHYIDR0);
 
-		case CICADA_CIS8201_PHYSID0:
-			debug("ax88180: Found CICADA CIS8201 PHY"
-			      " chipset. (PHY Addr=0x%x)\n", priv->PhyAddr);
+		if (priv->PhyID0 == CICADA_CIS8201_PHYIDR0) {
 
-			ax88180_mdio_write(dev, CIS_IMR,
+			debug ("ax88180: Found CICADA CIS8201 PHY"
+			       " chipset. (PHY Addr=0x%x)\n", priv->PhyAddr);
+			ax88180_mdio_write (dev, CIS_IMR,
 					    (CIS_INT_ENABLE | LINK_CHANGE_INT));
 
 			/* Set CIS_SMI_PRIORITY bit before force the media mode */
-			tmp_regval = ax88180_mdio_read(dev, CIS_AUX_CTRL_STATUS);
+			tmp_regval =
+			    ax88180_mdio_read (dev, CIS_AUX_CTRL_STATUS);
 			tmp_regval &= ~CIS_SMI_PRIORITY;
-			ax88180_mdio_write(dev, CIS_AUX_CTRL_STATUS, tmp_regval);
-
-			return 1;
-
-		case 0xffff:
-			/* No PHY at this addr */
-			break;
-
-		default:
-			printf("ax88180: Unknown PHY chipset %#x at addr %#x\n",
-			       priv->PhyID0, priv->PhyAddr);
-			break;
+			ax88180_mdio_write (dev, CIS_AUX_CTRL_STATUS,
+					    tmp_regval);
+		} else {
+			printf ("ax88180: Unknown PHY chipset!!\n");
+			return 0;
 		}
 	}
 
-	printf("ax88180: Unknown PHY chipset!!\n");
-	return 0;
+	return 1;
 }
 
-static void ax88180_media_config (struct eth_device *dev)
+static void ax88180_meidia_config (struct eth_device *dev)
 {
 	struct ax88180_private *priv = (struct ax88180_private *)dev->priv;
 	unsigned long bmcr_val, bmsr_val;
@@ -337,20 +310,20 @@ static void ax88180_media_config (struct eth_device *dev)
 
 	/* Waiting 2 seconds for PHY link stable */
 	for (i = 0; i < 20000; i++) {
-		bmsr_val = ax88180_mdio_read (dev, MII_BMSR);
-		if (bmsr_val & BMSR_LSTATUS) {
+		bmsr_val = ax88180_mdio_read (dev, BMSR);
+		if (bmsr_val & LINKOK) {
 			break;
 		}
 		udelay (100);
 	}
 
-	bmsr_val = ax88180_mdio_read (dev, MII_BMSR);
+	bmsr_val = ax88180_mdio_read (dev, BMSR);
 	debug ("ax88180: BMSR=0x%04x\n", (unsigned int)bmsr_val);
 
-	if (bmsr_val & BMSR_LSTATUS) {
-		bmcr_val = ax88180_mdio_read (dev, MII_BMCR);
+	if (bmsr_val & LINKOK) {
+		bmcr_val = ax88180_mdio_read (dev, BMCR);
 
-		if (bmcr_val & BMCR_ANENABLE) {
+		if (bmcr_val & AUTONEG_EN) {
 
 			/*
 			 * Waiting for Auto-negotiation completion, this may
@@ -359,8 +332,8 @@ static void ax88180_media_config (struct eth_device *dev)
 			debug ("ax88180: Auto-negotiation is "
 			       "enabled. Waiting for NWay completion..\n");
 			for (i = 0; i < 50000; i++) {
-				bmsr_val = ax88180_mdio_read (dev, MII_BMSR);
-				if (bmsr_val & BMSR_ANEGCOMPLETE) {
+				bmsr_val = ax88180_mdio_read (dev, BMSR);
+				if (bmsr_val & AUTONEG_COMPLETE) {
 					break;
 				}
 				udelay (100);
@@ -372,16 +345,12 @@ static void ax88180_media_config (struct eth_device *dev)
 		       (unsigned int)bmcr_val, (unsigned int)bmsr_val);
 
 		/* Get real media mode here */
-		switch (priv->PhyID0) {
-		case MARVELL_ALASKA_PHYSID0:
-			RealMediaMode = get_MarvellPHY_media_mode(dev);
-			break;
-		case CICADA_CIS8201_PHYSID0:
-			RealMediaMode = get_CicadaPHY_media_mode(dev);
-			break;
-		default:
+		if (priv->PhyID0 == MARVELL_88E1111_PHYIDR0) {
+			RealMediaMode = get_MarvellPHY_meida_mode (dev);
+		} else if (priv->PhyID0 == CICADA_CIS8201_PHYIDR0) {
+			RealMediaMode = get_CicadaPHY_meida_mode (dev);
+		} else {
 			RealMediaMode = MEDIA_1000FULL;
-			break;
 		}
 
 		priv->LinkState = INS_LINK_UP;
@@ -455,7 +424,7 @@ static void ax88180_media_config (struct eth_device *dev)
 	return;
 }
 
-static unsigned long get_MarvellPHY_media_mode (struct eth_device *dev)
+static unsigned long get_MarvellPHY_meida_mode (struct eth_device *dev)
 {
 	unsigned long m88_ssr;
 	unsigned long MediaMode;
@@ -488,7 +457,7 @@ static unsigned long get_MarvellPHY_media_mode (struct eth_device *dev)
 	return MediaMode;
 }
 
-static unsigned long get_CicadaPHY_media_mode (struct eth_device *dev)
+static unsigned long get_CicadaPHY_meida_mode (struct eth_device *dev)
 {
 	unsigned long tmp_regval;
 	unsigned long MediaMode;
@@ -553,7 +522,7 @@ static int ax88180_init (struct eth_device *dev, bd_t * bd)
 	    dev->enetaddr[4] | (((unsigned short)dev->enetaddr[5]) << 8);
 	OUTW (dev, tmp_regval, MACID2);
 
-	ax88180_media_config (dev);
+	ax88180_meidia_config (dev);
 
 	OUTW (dev, DEFAULT_RXFILTER, RXFILTER);
 
@@ -589,7 +558,7 @@ static int ax88180_recv (struct eth_device *dev)
 		if (ISR_Status & ISR_PHY) {
 			/* Read ISR register once to clear PHY interrupt bit */
 			tmp_regval = ax88180_mdio_read (dev, M88_ISR);
-			ax88180_media_config (dev);
+			ax88180_meidia_config (dev);
 		}
 
 		if ((ISR_Status & ISR_RX) || (ISR_Status & ISR_RXBUFFOVR)) {

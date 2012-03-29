@@ -54,7 +54,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define BOARDREV_MASK	0x10100000
 #define BOARDREV_B	0x10100000
 #define BOARDREV_C	0x00100000
-#define BOARDREV_D	0x00000000
 
 #define SYSCLK_66	66666666
 #define SYSCLK_50	50000000
@@ -65,7 +64,7 @@ unsigned long get_board_sys_clk(ulong dummy)
 	volatile ccsr_gpio_t *pgpio = (void *)(CONFIG_SYS_MPC85xx_GPIO_ADDR);
 	u32 val_gpdat, sysclk_gpio, board_rev_gpio;
 
-	val_gpdat = in_be32(&pgpio->gpdat);
+	val_gpdat = pgpio->gpdat;
 	sysclk_gpio = val_gpdat & SYSCLK_MASK;
 	board_rev_gpio = val_gpdat & BOARDREV_MASK;
 	if (board_rev_gpio == BOARDREV_C) {
@@ -78,11 +77,6 @@ unsigned long get_board_sys_clk(ulong dummy)
 			return SYSCLK_66;
 		else
 			return SYSCLK_50;
-	} else if (board_rev_gpio == BOARDREV_D) {
-		if(sysclk_gpio == 0)
-			return SYSCLK_66;
-		else
-			return SYSCLK_100;
 	}
 	return 0;
 }
@@ -106,14 +100,12 @@ int checkboard (void)
 	char board_rev = 0;
 	struct cpu_type *cpu;
 
-	val_gpdat = in_be32(&pgpio->gpdat);
+	val_gpdat = pgpio->gpdat;
 	board_rev_gpio = val_gpdat & BOARDREV_MASK;
 	if (board_rev_gpio == BOARDREV_C)
 		board_rev = 'C';
 	else if (board_rev_gpio == BOARDREV_B)
 		board_rev = 'B';
-	else if (board_rev_gpio == BOARDREV_D)
-		board_rev = 'D';
 	else
 		panic ("Unexpected Board REV %x detected!!\n", board_rev_gpio);
 
@@ -139,7 +131,7 @@ int checkboard (void)
 int board_early_init_r(void)
 {
 	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
-	const u8 flash_esel = find_tlb_idx((void *)flashbase, 1);
+	const u8 flash_esel = 2;
 
 	/*
 	 * Remap Boot flash region to caching-inhibited
@@ -167,7 +159,6 @@ int board_eth_init(bd_t *bis)
 	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 	int num = 0;
 	char *tmp;
-	u32 pordevsr;
 	unsigned int vscfw_addr;
 
 #ifdef CONFIG_TSEC1
@@ -180,8 +171,7 @@ int board_eth_init(bd_t *bis)
 #endif
 #ifdef CONFIG_TSEC3
 	SET_STD_TSEC_INFO(tsec_info[num], 3);
-	pordevsr = in_be32(&gur->pordevsr);
-	if (!(pordevsr & MPC85xx_PORDEVSR_SGMII3_DIS))
+	if (!(gur->pordevsr & MPC85xx_PORDEVSR_SGMII3_DIS))
 		tsec_info[num].flags |= TSEC_SGMII;
 	num++;
 #endif
@@ -208,8 +198,6 @@ int board_eth_init(bd_t *bis)
 #endif
 
 #if defined(CONFIG_OF_BOARD_SETUP)
-extern void ft_pci_board_setup(void *blob);
-
 void ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
@@ -219,8 +207,6 @@ void ft_board_setup(void *blob, bd_t *bd)
 
 	base = getenv_bootm_low();
 	size = getenv_bootm_size();
-
-	ft_pci_board_setup(blob);
 
 	fdt_fixup_memory(blob, (u64)base, (u64)size);
 }

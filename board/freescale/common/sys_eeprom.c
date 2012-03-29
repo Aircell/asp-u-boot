@@ -314,7 +314,7 @@ static void set_mac_address(unsigned int index, const char *string)
 	update_crc();
 }
 
-int do_mac(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mac(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char cmd;
 
@@ -351,7 +351,8 @@ int do_mac(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			prog_eeprom();
 			break;
 		default:
-			return cmd_usage(cmdtp);
+			cmd_usage(cmdtp);
+			break;
 		}
 
 		return 0;
@@ -387,7 +388,8 @@ int do_mac(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		break;
 	case 'h':	/* help */
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		break;
 	}
 
 	return 0;

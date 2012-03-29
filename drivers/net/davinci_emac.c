@@ -42,15 +42,20 @@
 #include <miiphy.h>
 #include <malloc.h>
 #include <asm/arch/emac_defs.h>
-#include <asm/io.h>
+#include "davinci_emac.h"
 
 unsigned int	emac_dbg = 0;
 #define debug_emac(fmt,args...)	if (emac_dbg) printf(fmt,##args)
 
-#ifdef DAVINCI_EMAC_GIG_ENABLE
-#define emac_gigabit_enable()	davinci_eth_gigabit_enable()
+#ifdef EMAC_HW_RAM_ADDR
+#warning "Use different address for BD"
+#define BD_TO_HW(x)	\
+	( ( (x) == 0) ? 0 : ( (x) - EMAC_WRAPPER_RAM_ADDR + EMAC_HW_RAM_ADDR ))
+#define HW_TO_BD(x)	\
+	( ( (x) == 0) ? 0 : ( (x) - EMAC_HW_RAM_ADDR + EMAC_WRAPPER_RAM_ADDR ))
 #else
-#define emac_gigabit_enable()	/* no gigabit to enable */
+#define BD_TO_HW(x)	(x)
+#define HW_TO_BD(x)	(x)
 #endif
 
 static void davinci_eth_mdio_enable(void);
@@ -106,14 +111,12 @@ static void davinci_eth_mdio_enable(void)
 
 	clkdiv = (EMAC_MDIO_BUS_FREQ / EMAC_MDIO_CLOCK_FREQ) - 1;
 
-	writel((clkdiv & 0xff) |
-	       MDIO_CONTROL_ENABLE |
-	       MDIO_CONTROL_FAULT |
-	       MDIO_CONTROL_FAULT_ENABLE,
-	       &adap_mdio->CONTROL);
+	adap_mdio->CONTROL = (clkdiv & 0xff) |
+		MDIO_CONTROL_ENABLE |
+		MDIO_CONTROL_FAULT |
+		MDIO_CONTROL_FAULT_ENABLE;
 
-	while (readl(&adap_mdio->CONTROL) & MDIO_CONTROL_IDLE)
-		;
+	while (adap_mdio->CONTROL & MDIO_CONTROL_IDLE) {;}
 }
 
 /*
@@ -128,8 +131,7 @@ static int davinci_eth_phy_detect(void)
 
 	active_phy_addr = 0xff;
 
-	phy_act_state = readl(&adap_mdio->ALIVE) & EMAC_MDIO_PHY_MASK;
-	if (phy_act_state == 0)
+	if ((phy_act_state = adap_mdio->ALIVE) == 0)
 		return(0);				/* No active PHYs */
 
 	debug_emac("davinci_eth_phy_detect(), ALIVE = 0x%08x\n", phy_act_state);
@@ -154,18 +156,15 @@ int davinci_eth_phy_read(u_int8_t phy_addr, u_int8_t reg_num, u_int16_t *data)
 {
 	int	tmp;
 
-	while (readl(&adap_mdio->USERACCESS0) & MDIO_USERACCESS0_GO)
-		;
+	while (adap_mdio->USERACCESS0 & MDIO_USERACCESS0_GO) {;}
 
-	writel(MDIO_USERACCESS0_GO |
-	       MDIO_USERACCESS0_WRITE_READ |
-	       ((reg_num & 0x1f) << 21) |
-	       ((phy_addr & 0x1f) << 16),
-	       &adap_mdio->USERACCESS0);
+	adap_mdio->USERACCESS0 = MDIO_USERACCESS0_GO |
+				MDIO_USERACCESS0_WRITE_READ |
+				((reg_num & 0x1f) << 21) |
+				((phy_addr & 0x1f) << 16);
 
 	/* Wait for command to complete */
-	while ((tmp = readl(&adap_mdio->USERACCESS0)) & MDIO_USERACCESS0_GO)
-		;
+	while ((tmp = adap_mdio->USERACCESS0) & MDIO_USERACCESS0_GO) {;}
 
 	if (tmp & MDIO_USERACCESS0_ACK) {
 		*data = tmp & 0xffff;
@@ -180,19 +179,16 @@ int davinci_eth_phy_read(u_int8_t phy_addr, u_int8_t reg_num, u_int16_t *data)
 int davinci_eth_phy_write(u_int8_t phy_addr, u_int8_t reg_num, u_int16_t data)
 {
 
-	while (readl(&adap_mdio->USERACCESS0) & MDIO_USERACCESS0_GO)
-		;
+	while (adap_mdio->USERACCESS0 & MDIO_USERACCESS0_GO) {;}
 
-	writel(MDIO_USERACCESS0_GO |
-	       MDIO_USERACCESS0_WRITE_WRITE |
-	       ((reg_num & 0x1f) << 21) |
-	       ((phy_addr & 0x1f) << 16) |
-	       (data & 0xffff),
-	       &adap_mdio->USERACCESS0);
+	adap_mdio->USERACCESS0 = MDIO_USERACCESS0_GO |
+				MDIO_USERACCESS0_WRITE_WRITE |
+				((reg_num & 0x1f) << 21) |
+				((phy_addr & 0x1f) << 16) |
+				(data & 0xffff);
 
 	/* Wait for command to complete */
-	while (readl(&adap_mdio->USERACCESS0) & MDIO_USERACCESS0_GO)
-		;
+	while (adap_mdio->USERACCESS0 & MDIO_USERACCESS0_GO) {;}
 
 	return(1);
 }
@@ -230,16 +226,42 @@ static int gen_get_link_speed(int phy_addr)
 static int gen_auto_negotiate(int phy_addr)
 {
 	u_int16_t	tmp;
+	u_int16_t	val;
+	unsigned int cntr = 0;
 
 	if (!davinci_eth_phy_read(phy_addr, PHY_BMCR, &tmp))
 		return(0);
+
+	val = tmp | PHY_BMCR_DPLX | PHY_BMCR_AUTON
+		| PHY_BMCR_100MB ;
+	davinci_eth_phy_write(phy_addr, PHY_BMCR, val);
+	davinci_eth_phy_read(phy_addr, PHY_BMCR, &val);
+
+	/* advertise 100 Full Duplex */
+	davinci_eth_phy_read(phy_addr,PHY_ANAR, &val);
+	val |= (PHY_ANLPAR_10 | PHY_ANLPAR_10FD | PHY_ANLPAR_TX
+		| PHY_ANLPAR_TXFD);
+	davinci_eth_phy_write(phy_addr,PHY_ANAR, val);
+	davinci_eth_phy_read(phy_addr,PHY_ANAR, &val);
+
+	davinci_eth_phy_read(phy_addr, PHY_BMCR, &tmp);
 
 	/* Restart Auto_negotiation  */
 	tmp |= PHY_BMCR_AUTON;
 	davinci_eth_phy_write(phy_addr, PHY_BMCR, tmp);
 
-	/*check AutoNegotiate complete */
-	udelay (10000);
+	/*check AutoNegotiate complete - it can take upto 3 secs*/
+	do{
+		udelay(40000);
+		cntr++;
+
+		if (davinci_eth_phy_read(phy_addr, PHY_BMSR, &tmp)){
+			if(tmp & PHY_BMSR_AUTN_COMP)
+				break;
+		}
+
+	}while(cntr < 250);
+
 	if (!davinci_eth_phy_read(phy_addr, PHY_BMSR, &tmp))
 		return(0);
 
@@ -252,33 +274,18 @@ static int gen_auto_negotiate(int phy_addr)
 
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-static int davinci_mii_phy_read(const char *devname, unsigned char addr, unsigned char reg, unsigned short *value)
+static int davinci_mii_phy_read(char *devname, unsigned char addr, unsigned char reg, unsigned short *value)
 {
 	return(davinci_eth_phy_read(addr, reg, value) ? 0 : 1);
 }
 
-static int davinci_mii_phy_write(const char *devname, unsigned char addr, unsigned char reg, unsigned short value)
+static int davinci_mii_phy_write(char *devname, unsigned char addr, unsigned char reg, unsigned short value)
 {
 	return(davinci_eth_phy_write(addr, reg, value) ? 0 : 1);
 }
+
 #endif
 
-static void  __attribute__((unused)) davinci_eth_gigabit_enable(void)
-{
-	u_int16_t data;
-
-	if (davinci_eth_phy_read(EMAC_MDIO_PHY_NUM, 0, &data)) {
-		if (data & (1 << 6)) { /* speed selection MSB */
-			/*
-			 * Check if link detected is giga-bit
-			 * If Gigabit mode detected, enable gigbit in MAC
-			 */
-			writel(EMAC_MACCONTROL_GIGFORCE |
-			       EMAC_MACCONTROL_GIGABIT_ENABLE,
-			       &adap_emac->MACCONTROL);
-		}
-	}
-}
 
 /* Eth device open */
 static int davinci_eth_open(struct eth_device *dev, bd_t *bis)
@@ -286,130 +293,130 @@ static int davinci_eth_open(struct eth_device *dev, bd_t *bis)
 	dv_reg_p		addr;
 	u_int32_t		clkdiv, cnt;
 	volatile emac_desc	*rx_desc;
-	unsigned long		mac_hi;
-	unsigned long		mac_lo;
+	u_int16_t		lpa_val;
 
 	debug_emac("+ emac_open\n");
 
 	/* Reset EMAC module and disable interrupts in wrapper */
-	writel(1, &adap_emac->SOFTRESET);
-	while (readl(&adap_emac->SOFTRESET) != 0)
-		;
-#if defined(DAVINCI_EMAC_VERSION2)
-	writel(1, &adap_ewrap->softrst);
-	while (readl(&adap_ewrap->softrst) != 0)
-		;
+	adap_emac->SOFTRESET = 1;
+	while (adap_emac->SOFTRESET != 0) {;}
+
+#if defined(CONFIG_SOC_DM646x) || defined(CONFIG_SOC_DM365) || (CONFIG_OMAP3_AM3517EVM)
+	adap_ewrap->SOFTRST = 1;
+	while (adap_ewrap->SOFTRST != 0) {;}
 #else
-	writel(0, &adap_ewrap->EWCTL);
+	adap_ewrap->EWCTL = 0;
 	for (cnt = 0; cnt < 5; cnt++) {
-		clkdiv = readl(&adap_ewrap->EWCTL);
+		clkdiv = adap_ewrap->EWCTL;
 	}
 #endif
 
 	rx_desc = emac_rx_desc;
 
-	writel(1, &adap_emac->TXCONTROL);
-	writel(1, &adap_emac->RXCONTROL);
+	adap_emac->TXCONTROL = 0x01;
+	adap_emac->RXCONTROL = 0x01;
 
 	/* Set MAC Addresses & Init multicast Hash to 0 (disable any multicast receive) */
 	/* Using channel 0 only - other channels are disabled */
-	writel(0, &adap_emac->MACINDEX);
-	mac_hi = (davinci_eth_mac_addr[3] << 24) |
-		 (davinci_eth_mac_addr[2] << 16) |
-		 (davinci_eth_mac_addr[1] << 8)  |
-		 (davinci_eth_mac_addr[0]);
-	mac_lo = (davinci_eth_mac_addr[5] << 8) |
-		 (davinci_eth_mac_addr[4]);
-
-	writel(mac_hi, &adap_emac->MACADDRHI);
-#if defined(DAVINCI_EMAC_VERSION2)
-	writel(mac_lo | EMAC_MAC_ADDR_IS_VALID | EMAC_MAC_ADDR_MATCH,
-	       &adap_emac->MACADDRLO);
+	adap_emac->MACINDEX = 0;
+	adap_emac->MACADDRHI =
+		(davinci_eth_mac_addr[3] << 24) |
+		(davinci_eth_mac_addr[2] << 16) |
+		(davinci_eth_mac_addr[1] << 8)  |
+		(davinci_eth_mac_addr[0]);
+#if defined(CONFIG_SOC_DM646x) || defined(CONFIG_SOC_DM365) || (CONFIG_OMAP3_AM3517EVM)
+	adap_emac->MACADDRLO =
+		(davinci_eth_mac_addr[5] << 8) |
+		(davinci_eth_mac_addr[4]| (1 << 19) | (1 << 20));
 #else
-	writel(mac_lo, &adap_emac->MACADDRLO);
+	adap_emac->MACADDRLO =
+		(davinci_eth_mac_addr[5] << 8) |
+		(davinci_eth_mac_addr[4]);
 #endif
 
-	writel(0, &adap_emac->MACHASH1);
-	writel(0, &adap_emac->MACHASH2);
+	adap_emac->MACHASH1 = 0;
+	adap_emac->MACHASH2 = 0;
 
 	/* Set source MAC address - REQUIRED */
-	writel(mac_hi, &adap_emac->MACSRCADDRHI);
-	writel(mac_lo, &adap_emac->MACSRCADDRLO);
+	adap_emac->MACSRCADDRHI =
+		(davinci_eth_mac_addr[3] << 24) |
+		(davinci_eth_mac_addr[2] << 16) |
+		(davinci_eth_mac_addr[1] << 8)  |
+		(davinci_eth_mac_addr[0]);
+	adap_emac->MACSRCADDRLO =
+		(davinci_eth_mac_addr[4] << 8) |
+		(davinci_eth_mac_addr[5]);
 
 	/* Set DMA 8 TX / 8 RX Head pointers to 0 */
 	addr = &adap_emac->TX0HDP;
 	for(cnt = 0; cnt < 16; cnt++)
-		writel(0, addr++);
-
+		*addr++ = 0;
 	addr = &adap_emac->RX0HDP;
 	for(cnt = 0; cnt < 16; cnt++)
-		writel(0, addr++);
+		*addr++ = 0;
 
 	/* Clear Statistics (do this before setting MacControl register) */
 	addr = &adap_emac->RXGOODFRAMES;
 	for(cnt = 0; cnt < EMAC_NUM_STATS; cnt++)
-		writel(0, addr++);
+		*addr++ = 0;
 
 	/* No multicast addressing */
-	writel(0, &adap_emac->MACHASH1);
-	writel(0, &adap_emac->MACHASH2);
+	adap_emac->MACHASH1 = 0;
+	adap_emac->MACHASH2 = 0;
 
 	/* Create RX queue and set receive process in place */
 	emac_rx_active_head = emac_rx_desc;
 	for (cnt = 0; cnt < EMAC_MAX_RX_BUFFERS; cnt++) {
-		rx_desc->next = (u_int32_t)(rx_desc + 1);
+		rx_desc->next = BD_TO_HW((u_int32_t)(rx_desc + 1));
 		rx_desc->buffer = &emac_rx_buffers[cnt * (EMAC_MAX_ETHERNET_PKT_SIZE + EMAC_PKT_ALIGN)];
 		rx_desc->buff_off_len = EMAC_MAX_ETHERNET_PKT_SIZE;
 		rx_desc->pkt_flag_len = EMAC_CPPI_OWNERSHIP_BIT;
 		rx_desc++;
 	}
 
-	/* Finalize the rx desc list */
+	/* Set the last descriptor's "next" parameter to 0 to end the RX desc list */
 	rx_desc--;
 	rx_desc->next = 0;
 	emac_rx_active_tail = rx_desc;
 	emac_rx_queue_active = 1;
 
 	/* Enable TX/RX */
-	writel(EMAC_MAX_ETHERNET_PKT_SIZE, &adap_emac->RXMAXLEN);
-	writel(0, &adap_emac->RXBUFFEROFFSET);
+	adap_emac->RXMAXLEN = EMAC_MAX_ETHERNET_PKT_SIZE;
+	adap_emac->RXBUFFEROFFSET = 0;
 
-	/*
-	 * No fancy configs - Use this for promiscous debug
-	 *   - EMAC_RXMBPENABLE_RXCAFEN_ENABLE
-	 */
-	writel(EMAC_RXMBPENABLE_RXBROADEN, &adap_emac->RXMBPENABLE);
+	/* No fancy configs - Use this for promiscous for debug - EMAC_RXMBPENABLE_RXCAFEN_ENABLE */
+	adap_emac->RXMBPENABLE = EMAC_RXMBPENABLE_RXBROADEN;
 
 	/* Enable ch 0 only */
-	writel(1, &adap_emac->RXUNICASTSET);
-
-	/* Enable MII interface and Full duplex mode */
-#ifdef CONFIG_SOC_DA8XX
-	writel((EMAC_MACCONTROL_MIIEN_ENABLE |
-		EMAC_MACCONTROL_FULLDUPLEX_ENABLE |
-		EMAC_MACCONTROL_RMIISPEED_100),
-	       &adap_emac->MACCONTROL);
-#else
-	writel((EMAC_MACCONTROL_MIIEN_ENABLE |
-		EMAC_MACCONTROL_FULLDUPLEX_ENABLE),
-	       &adap_emac->MACCONTROL);
-#endif
+	adap_emac->RXUNICASTSET = 0x01;
 
 	/* Init MDIO & get link state */
 	clkdiv = (EMAC_MDIO_BUS_FREQ / EMAC_MDIO_CLOCK_FREQ) - 1;
-	writel((clkdiv & 0xff) | MDIO_CONTROL_ENABLE | MDIO_CONTROL_FAULT,
-	       &adap_mdio->CONTROL);
+	adap_mdio->CONTROL = ((clkdiv & 0xff) | MDIO_CONTROL_ENABLE | MDIO_CONTROL_FAULT);
 
-	/* We need to wait for MDIO to start */
-	udelay(1000);
-
-	if (!phy.get_link_speed(active_phy_addr))
+	if (!phy.auto_negotiate(active_phy_addr))
 		return(0);
 
-	emac_gigabit_enable();
+	davinci_eth_phy_read(active_phy_addr,PHY_ANLPAR,&lpa_val);
+	if (lpa_val & (PHY_ANLPAR_10FD | PHY_ANLPAR_TXFD) ) {
+		/* set EMAC for Full Duplex  */
+		adap_emac->MACCONTROL = EMAC_MACCONTROL_MIIEN_ENABLE |
+					 EMAC_MACCONTROL_FULLDUPLEX_ENABLE;
+	}else{
+		/*set EMAC for Half Duplex  */
+		adap_emac->MACCONTROL = EMAC_MACCONTROL_MIIEN_ENABLE;
+	}
+
+#ifdef CONFIG_DRIVER_TI_EMAC_USE_RMII
+	if (lpa_val & (PHY_ANLPAR_TXFD | PHY_ANLPAR_TX) ) {
+		adap_emac->MACCONTROL |= EMAC_MACCONTROL_RMIISPEED_100;
+	} else {
+		adap_emac->MACCONTROL &= ~EMAC_MACCONTROL_RMIISPEED_100;
+	}
+#endif
 
 	/* Start receive process */
-	writel((u_int32_t)emac_rx_desc, &adap_emac->RX0HDP);
+	adap_emac->RX0HDP = BD_TO_HW((u_int32_t)emac_rx_desc);
 
 	debug_emac("- emac_open\n");
 
@@ -426,42 +433,34 @@ static void davinci_eth_ch_teardown(int ch)
 
 	if (ch == EMAC_CH_TX) {
 		/* Init TX channel teardown */
-		writel(1, &adap_emac->TXTEARDOWN);
-		do {
-			/*
-			 * Wait here for Tx teardown completion interrupt to
-			 * occur. Note: A task delay can be called here to pend
-			 * rather than occupying CPU cycles - anyway it has
-			 * been found that teardown takes very few cpu cycles
-			 * and does not affect functionality
-			 */
-			dly--;
-			udelay(1);
-			if (dly == 0)
+		adap_emac->TXTEARDOWN = 1;
+		for(cnt = 0; cnt != 0xfffffffc; cnt = adap_emac->TX0CP) {
+			/* Wait here for Tx teardown completion interrupt to occur
+			 * Note: A task delay can be called here to pend rather than
+			 * occupying CPU cycles - anyway it has been found that teardown
+			 * takes very few cpu cycles and does not affect functionality */
+			 dly--;
+			 udelay(1);
+			 if (dly == 0)
 				break;
-			cnt = readl(&adap_emac->TX0CP);
-		} while (cnt != 0xfffffffc);
-		writel(cnt, &adap_emac->TX0CP);
-		writel(0, &adap_emac->TX0HDP);
+		}
+		adap_emac->TX0CP = cnt;
+		adap_emac->TX0HDP = 0;
 	} else {
 		/* Init RX channel teardown */
-		writel(1, &adap_emac->RXTEARDOWN);
-		do {
-			/*
-			 * Wait here for Rx teardown completion interrupt to
-			 * occur. Note: A task delay can be called here to pend
-			 * rather than occupying CPU cycles - anyway it has
-			 * been found that teardown takes very few cpu cycles
-			 * and does not affect functionality
-			 */
-			dly--;
-			udelay(1);
-			if (dly == 0)
+		adap_emac->RXTEARDOWN = 1;
+		for(cnt = 0; cnt != 0xfffffffc; cnt = adap_emac->RX0CP) {
+			/* Wait here for Rx teardown completion interrupt to occur
+			 * Note: A task delay can be called here to pend rather than
+			 * occupying CPU cycles - anyway it has been found that teardown
+			 * takes very few cpu cycles and does not affect functionality */
+			 dly--;
+			 udelay(1);
+			 if (dly == 0)
 				break;
-			cnt = readl(&adap_emac->RX0CP);
-		} while (cnt != 0xfffffffc);
-		writel(cnt, &adap_emac->RX0CP);
-		writel(0, &adap_emac->RX0HDP);
+		}
+		adap_emac->RX0CP = cnt;
+		adap_emac->RX0HDP = 0;
 	}
 
 	debug_emac("- emac_ch_teardown\n");
@@ -476,13 +475,13 @@ static void davinci_eth_close(struct eth_device *dev)
 	davinci_eth_ch_teardown(EMAC_CH_RX);	/* RX Channel teardown */
 
 	/* Reset EMAC module and disable interrupts in wrapper */
-	writel(1, &adap_emac->SOFTRESET);
-#if defined(DAVINCI_EMAC_VERSION2)
-	writel(1, &adap_ewrap->softrst);
-#else
-	writel(0, &adap_ewrap->EWCTL);
-#endif
+	adap_emac->SOFTRESET = 1;
 
+#if defined(CONFIG_SOC_DM646x) || defined(CONFIG_SOC_DM365) || (CONFIG_OMAP3_AM3517EVM)
+	adap_ewrap->SOFTRST = 1;
+#else
+	adap_ewrap->EWCTL = 0;
+#endif
 	debug_emac("- emac_close\n");
 }
 
@@ -505,8 +504,6 @@ static int davinci_eth_send_packet (struct eth_device *dev,
 		return (ret_status);
 	}
 
-	emac_gigabit_enable();
-
 	/* Check packet size and if < EMAC_MIN_ETHERNET_PKT_SIZE, pad it up */
 	if (length < EMAC_MIN_ETHERNET_PKT_SIZE) {
 		length = EMAC_MIN_ETHERNET_PKT_SIZE;
@@ -521,7 +518,7 @@ static int davinci_eth_send_packet (struct eth_device *dev,
 				      EMAC_CPPI_OWNERSHIP_BIT |
 				      EMAC_CPPI_EOP_BIT);
 	/* Send the packet */
-	writel((unsigned long)emac_tx_desc, &adap_emac->TX0HDP);
+	adap_emac->TX0HDP = BD_TO_HW((unsigned int) emac_tx_desc);
 
 	/* Wait for packet to complete or link down */
 	while (1) {
@@ -529,10 +526,7 @@ static int davinci_eth_send_packet (struct eth_device *dev,
 			davinci_eth_ch_teardown (EMAC_CH_TX);
 			return (ret_status);
 		}
-
-		emac_gigabit_enable();
-
-		if (readl(&adap_emac->TXINTSTATRAW) & 0x01) {
+		if (adap_emac->TXINTSTATRAW & 0x01) {
 			ret_status = length;
 			break;
 		}
@@ -565,15 +559,15 @@ static int davinci_eth_rcv_packet (struct eth_device *dev)
 		}
 
 		/* Ack received packet descriptor */
-		writel((unsigned long)rx_curr_desc, &adap_emac->RX0CP);
+		adap_emac->RX0CP = BD_TO_HW((unsigned int) rx_curr_desc);
 		curr_desc = rx_curr_desc;
 		emac_rx_active_head =
-			(volatile emac_desc *) rx_curr_desc->next;
+			(volatile emac_desc *) (HW_TO_BD(rx_curr_desc->next));
 
 		if (status & EMAC_CPPI_EOQ_BIT) {
 			if (emac_rx_active_head) {
-				writel((unsigned long)emac_rx_active_head,
-				       &adap_emac->RX0HDP);
+				adap_emac->RX0HDP =
+				BD_TO_HW((unsigned int) emac_rx_active_head);
 			} else {
 				emac_rx_queue_active = 0;
 				printf ("INFO:emac_rcv_packet: RX Queue not active\n");
@@ -590,25 +584,25 @@ static int davinci_eth_rcv_packet (struct eth_device *dev)
 			emac_rx_active_head = curr_desc;
 			emac_rx_active_tail = curr_desc;
 			if (emac_rx_queue_active != 0) {
-				writel((unsigned long)emac_rx_active_head,
-				       &adap_emac->RX0HDP);
+				adap_emac->RX0HDP =
+					BD_TO_HW((unsigned int) emac_rx_active_head);
 				printf ("INFO: emac_rcv_pkt: active queue head = 0, HDP fired\n");
 				emac_rx_queue_active = 1;
 			}
 		} else {
 			tail_desc = emac_rx_active_tail;
 			emac_rx_active_tail = curr_desc;
-			tail_desc->next = (unsigned int) curr_desc;
+			tail_desc->next = BD_TO_HW((unsigned int) curr_desc);
 			status = tail_desc->pkt_flag_len;
 			if (status & EMAC_CPPI_EOQ_BIT) {
-				writel((unsigned long)curr_desc,
-				       &adap_emac->RX0HDP);
+				adap_emac->RX0HDP = BD_TO_HW((unsigned int) curr_desc);
 				status &= ~EMAC_CPPI_EOQ_BIT;
 				tail_desc->pkt_flag_len = status;
 			}
 		}
 		return (ret);
 	}
+
 	return (0);
 }
 
@@ -630,6 +624,7 @@ int davinci_emac_initialize(void)
 		return -1;
 
 	memset(dev, 0, sizeof *dev);
+	sprintf(dev->name, "DaVinci EMAC");
 
 	dev->iobase = 0;
 	dev->init = davinci_eth_open;
@@ -642,7 +637,7 @@ int davinci_emac_initialize(void)
 	davinci_eth_mdio_enable();
 
 	for (i = 0; i < 256; i++) {
-		if (readl(&adap_mdio->ALIVE))
+		if (adap_mdio->ALIVE)
 			break;
 		udelay(10);
 	}
@@ -672,6 +667,7 @@ int davinci_emac_initialize(void)
 	phy_id |= tmp & 0x0000ffff;
 
 	switch (phy_id) {
+	#if defined(PHY_LXT972)
 		case PHY_LXT972:
 			sprintf(phy.name, "LXT972 @ 0x%02x", active_phy_addr);
 			phy.init = lxt972_init_phy;
@@ -679,6 +675,8 @@ int davinci_emac_initialize(void)
 			phy.get_link_speed = lxt972_get_link_speed;
 			phy.auto_negotiate = lxt972_auto_negotiate;
 			break;
+	#endif
+	#if defined(PHY_DP83848)
 		case PHY_DP83848:
 			sprintf(phy.name, "DP83848 @ 0x%02x", active_phy_addr);
 			phy.init = dp83848_init_phy;
@@ -686,6 +684,7 @@ int davinci_emac_initialize(void)
 			phy.get_link_speed = dp83848_get_link_speed;
 			phy.auto_negotiate = dp83848_auto_negotiate;
 			break;
+	#endif
 		default:
 			sprintf(phy.name, "GENERIC @ 0x%02x", active_phy_addr);
 			phy.init = gen_init_phy;

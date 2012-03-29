@@ -6,7 +6,7 @@
 #include <common.h>
 #include <df.h>
 
-static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	const char *cmd;
 
@@ -27,7 +27,8 @@ static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 usage:
-	return cmd_usage(cmdtp);
+	cmd_usage(cmdtp);
+	return 1;
 }
 
 U_BOOT_CMD(

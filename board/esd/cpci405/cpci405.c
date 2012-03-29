@@ -32,7 +32,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 extern void __ft_board_setup(void *blob, bd_t *bd);
 
 #undef FPGA_DEBUG
@@ -89,6 +89,7 @@ int N_AU_IMAGES = (sizeof(au_image) / sizeof(au_image[0]));
 
 /* Prototypes */
 int cpci405_version(void);
+int gunzip(void *, int, unsigned char *, unsigned long *);
 void lxt971_no_sleep(void);
 
 int board_early_init_f(void)
@@ -416,7 +417,7 @@ int checkboard(void)
 	int len;
 #endif
 	char str[64];
-	int i = getenv_f("serial#", str, sizeof(str));
+	int i = getenv_r("serial#", str, sizeof(str));
 	unsigned short ver;
 
 	puts("Board: ");
@@ -650,7 +651,7 @@ int OWReadByte(void)
 	return result;
 }
 
-int do_onewire(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_onewire(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned short val;
 	int result;
@@ -698,7 +699,7 @@ U_BOOT_CMD(
 /*
  * Write backplane ip-address...
  */
-int do_get_bpip(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_get_bpip(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	bd_t *bd = gd->bd;
 	char *buf;
@@ -756,7 +757,7 @@ U_BOOT_CMD(
 /*
  * Set and print backplane ip...
  */
-int do_set_bpip(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_set_bpip(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *buf;
 	char str[32];

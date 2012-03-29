@@ -59,14 +59,13 @@ DECLARE_GLOBAL_DATA_PTR;
     !defined(CONFIG_ENV_IS_IN_FLASH)	&& \
     !defined(CONFIG_ENV_IS_IN_DATAFLASH)	&& \
     !defined(CONFIG_ENV_IS_IN_MG_DISK)	&& \
-    !defined(CONFIG_ENV_IS_IN_MMC)  && \
     !defined(CONFIG_ENV_IS_IN_NAND)	&& \
     !defined(CONFIG_ENV_IS_IN_NVRAM)	&& \
     !defined(CONFIG_ENV_IS_IN_ONENAND)	&& \
     !defined(CONFIG_ENV_IS_IN_SPI_FLASH)	&& \
     !defined(CONFIG_ENV_IS_NOWHERE)
 # error Define one of CONFIG_ENV_IS_IN_{EEPROM|FLASH|DATAFLASH|ONENAND|\
-SPI_FLASH|MG_DISK|NVRAM|MMC|NOWHERE}
+SPI_FLASH|MG_DISK|NVRAM|NOWHERE}
 #endif
 
 #define XMK_STR(x)	#x
@@ -140,7 +139,7 @@ static int printenv(char *name, int state)
 	return i;
 }
 
-int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int i;
 	int rcode = 0;
@@ -174,7 +173,7 @@ int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * This function will ONLY work with a in-RAM copy of the environment
  */
 
-int _do_setenv (int flag, int argc, char * const argv[])
+int _do_setenv (int flag, int argc, char *argv[])
 {
 	int   i, len, oldval;
 	int   console = -1;
@@ -386,12 +385,24 @@ int _do_setenv (int flag, int argc, char * const argv[])
 		return 0;
 	}
 #endif
+
+#ifdef CONFIG_AMIGAONEG3SE
+	if (strcmp(argv[1], "vga_fg_color") == 0 ||
+	    strcmp(argv[1], "vga_bg_color") == 0 ) {
+		extern void video_set_color(unsigned char attr);
+		extern unsigned char video_get_attr(void);
+
+		video_set_color(video_get_attr());
+		return 0;
+	}
+#endif	/* CONFIG_AMIGAONEG3SE */
+
 	return 0;
 }
 
 int setenv (char *varname, char *varvalue)
 {
-	char * const argv[4] = { "setenv", varname, varvalue, NULL };
+	char *argv[4] = { "setenv", varname, varvalue, NULL };
 	if ((varvalue == NULL) || (varvalue[0] == '\0'))
 		return _do_setenv (0, 2, argv);
 	else
@@ -401,15 +412,17 @@ int setenv (char *varname, char *varvalue)
 #ifdef CONFIG_HAS_UID
 void forceenv (char *varname, char *varvalue)
 {
-	char * const argv[4] = { "forceenv", varname, varvalue, NULL };
+	char *argv[4] = { "forceenv", varname, varvalue, NULL };
 	_do_setenv (0xdeaf4add, 3, argv);
 }
 #endif
 
-int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	return _do_setenv (flag, argc, argv);
 }
@@ -419,7 +432,7 @@ int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  */
 
 #if defined(CONFIG_CMD_ASKENV)
-int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	extern char console_buffer[CONFIG_SYS_CBSIZE];
 	char message[CONFIG_SYS_CBSIZE];
@@ -432,13 +445,15 @@ int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	local_args[2] = NULL;
 	local_args[3] = NULL;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
-
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 	/* Check the syntax */
 	switch (argc) {
 	case 1:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 
 	case 2:		/* askenv envname */
 		sprintf (message, "Please enter '%s':", argv[1]);
@@ -494,14 +509,16 @@ int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * Interactively edit an environment variable
  */
 #if defined(CONFIG_CMD_EDITENV)
-int do_editenv(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_editenv(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char buffer[CONFIG_SYS_CBSIZE];
 	char *init_val;
 	int len;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Set read buffer to initial value or empty sting */
 	init_val = getenv(argv[1]);
@@ -544,7 +561,7 @@ char *getenv (char *name)
 	return (NULL);
 }
 
-int getenv_f(char *name, char *buf, unsigned len)
+int getenv_r (char *name, char *buf, unsigned len)
 {
 	int i, nxt;
 
@@ -558,26 +575,20 @@ int getenv_f(char *name, char *buf, unsigned len)
 		}
 		if ((val=envmatch((uchar *)name, i)) < 0)
 			continue;
-
 		/* found; copy out */
-		for (n=0; n<len; ++n, ++buf) {
-			if ((*buf = env_get_char(val++)) == '\0')
-				return n;
-		}
-
-		if (n)
-			*--buf = '\0';
-
-		printf("env_buf too small [%d]\n", len);
-
-		return n;
+		n = 0;
+		while ((len > n++) && (*buf++ = env_get_char(val++)) != '\0')
+			;
+		if (len == n)
+			*buf = '\0';
+		return (n);
 	}
 	return (-1);
 }
 
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
 
-int do_saveenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_saveenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	extern char * env_name_spec;
 
@@ -661,7 +672,7 @@ U_BOOT_CMD(
 #endif
 
 #if defined(CONFIG_CMD_RUN)
-int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 U_BOOT_CMD(
 	run,	CONFIG_SYS_MAXARGS,	1,	do_run,
 	"run commands in an environment variable",
@@ -669,3 +680,57 @@ U_BOOT_CMD(
 	"    - run the commands in the environment variable(s) 'var'"
 );
 #endif
+
+static int do_env_default(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+{
+	if ((argc != 2) || (strcmp(argv[1], "-f") != 0)) {
+		return cmd_usage(cmdtp);
+	}
+	printf("## Resetting to default environment\n");
+	set_default_env();
+	return 0;
+}
+
+/*
+ * New command line interface: "env" command with subcommands
+ */
+static cmd_tbl_t cmd_env_sub[] = {
+#if defined(CONFIG_CMD_ASKENV)
+	U_BOOT_CMD_MKENT(ask, CONFIG_SYS_MAXARGS, 1, do_askenv, "", ""),
+#endif
+	U_BOOT_CMD_MKENT(default, 1, 0, do_env_default, "", ""),
+#if defined(CONFIG_CMD_RUN)
+	U_BOOT_CMD_MKENT(run, CONFIG_SYS_MAXARGS, 1, do_run, "", ""),
+#endif
+};
+
+static int do_env (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	cmd_tbl_t *cp;
+
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
+	/* drop initial "env" arg */
+	argc--;
+	argv++;
+
+	cp = find_cmd_tbl(argv[0], cmd_env_sub, ARRAY_SIZE(cmd_env_sub));
+
+	if (cp)
+		return cp->cmd(cmdtp, flag, argc, argv);
+
+	return cmd_usage(cmdtp);
+}
+
+U_BOOT_CMD(
+	env, CONFIG_SYS_MAXARGS, 1, do_env,
+	"environment handling commands",
+#if defined(CONFIG_CMD_ASKENV)
+	"ask name [message] [size] - ask for environment variable\nenv "
+#endif
+	"default -f - reset default environment\n"
+#if defined(CONFIG_CMD_RUN)
+	"env run var [...] - run commands in an environment variable\n"
+#endif
+);

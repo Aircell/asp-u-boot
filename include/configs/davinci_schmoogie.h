@@ -69,7 +69,6 @@
 /* Network & Ethernet Configuration */
 /*==================================*/
 #define CONFIG_DRIVER_TI_EMAC
-#define CONFIG_EMAC_MDIO_PHY_NUM	1
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_DNS
@@ -84,7 +83,6 @@
 #undef CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_NAND_DAVINCI
-#define CONFIG_SYS_NAND_CS		2
 #define CONFIG_ENV_IS_IN_NAND		/* U-Boot env in NAND Flash  */
 #define CONFIG_ENV_SECT_SIZE	2048	/* Env sector Size */
 #define CONFIG_ENV_SIZE		(128 << 10)	/* 128 KiB */
@@ -94,6 +92,7 @@
 #define CONFIG_SYS_NAND_HW_ECC
 #define CONFIG_SYS_MAX_NAND_DEVICE	1	/* Max number of NAND devices */
 #define CONFIG_ENV_OFFSET		0x0	/* Block 0--not used by bootcode */
+#define CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 /*=====================*/
 /* Board related stuff */
 /*=====================*/

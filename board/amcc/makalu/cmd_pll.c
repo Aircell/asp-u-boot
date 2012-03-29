@@ -178,18 +178,18 @@ test_write(void)
 }
 
 int
-do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char c = '\0';
 	pll_freq_t pll_freq;
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		goto ret;
+	}
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
-
-	for (pll_freq = PLL_ebc20; pll_freq < PLL_TOTAL; pll_freq++) {
+	for (pll_freq = PLL_ebc20; pll_freq < PLL_TOTAL; pll_freq++)
 		if (!strcmp(pll_name[pll_freq], argv[1]))
 			break;
-	}
 
 	switch (pll_freq) {
 	case PLL_ebc20:
@@ -223,7 +223,8 @@ do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	default:
 		printf("Invalid options\n\n");
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		goto ret;
 	}
 
 	printf("PLL set to %s, "

@@ -330,9 +330,8 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 	mcx->flash.size = params->page_size * params->pages_per_sector
 	    * params->sectors_per_block * params->nr_blocks;
 
-	printf("SF: Detected %s with page size %u, total ",
-	       params->name, params->page_size);
-	print_size(mcx->flash.size, "\n");
+	printf("SF: Detected %s with page size %u, total %u bytes\n",
+	      params->name, params->page_size, mcx->flash.size);
 
 	return &mcx->flash;
 }

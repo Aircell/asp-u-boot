@@ -1,11 +1,8 @@
-include $(TOPDIR)/config.mk
+CFLAGS += -Wall
 
-all: $(obj)easylogo
-
-$(obj)easylogo: $(SRCTREE)/tools/easylogo/easylogo.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+all: easylogo
 
 clean:
-	rm -f $(obj)easylogo
+	rm -f easylogo *.o
 
 .PHONY: all clean

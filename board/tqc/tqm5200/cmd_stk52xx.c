@@ -301,7 +301,7 @@ static int i2s_squarewave(unsigned long duration, unsigned int freq,
 	return 0;
 }
 
-static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned long reg, val, duration;
 	char *tmp;
@@ -327,7 +327,8 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	switch (argc) {
 	case 0:
 	case 1:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	case 2:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			printf ("Play sawtooth\n");
@@ -341,7 +342,8 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return rcode;
 		}
 
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	case 3:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -356,7 +358,8 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 						LEFT_RIGHT);
 			return rcode;
 		}
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	case 4:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -379,7 +382,8 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			pcm1772_write_reg((uchar)reg, (uchar)val);
 			return 0;
 		}
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	case 5:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -408,13 +412,14 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 						channel);
 			return rcode;
 		}
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 	printf ("Usage:\nsound cmd [arg1] [arg2] ...\n");
 	return 1;
 }
 
-static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned long length, addr;
 	unsigned char volume;
@@ -479,7 +484,7 @@ static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return rcode;
 }
 
-static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned char volume;
 	unsigned int channel;
@@ -508,7 +513,8 @@ static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			channel = LEFT_RIGHT;
 		break;
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	if ((tmp = getenv ("volume")) != NULL) {
@@ -575,7 +581,7 @@ void led_init(void)
  * return 1 if led number unknown
  * return 0 else
  */
-int do_led(char * const argv[])
+int do_led(char *argv[])
 {
 	struct mpc5xxx_gpio *gpio = (struct mpc5xxx_gpio *)MPC5XXX_GPIO;
 	struct mpc5xxx_gpt_0_7 *gpt = (struct mpc5xxx_gpt_0_7 *)MPC5XXX_GPT;
@@ -886,7 +892,7 @@ int can_init(void)
  * return 1 on CAN failure
  * return 0 if no failure
  */
-int do_can(char * const argv[])
+int do_can(char *argv[])
 {
 	int i;
 	struct mpc5xxx_mscan *can1 =
@@ -988,7 +994,7 @@ int do_can(char * const argv[])
  * return 3 on rts/cts failure
  * return 0 if no failure
  */
-int do_rs232(char * const argv[])
+int do_rs232(char *argv[])
 {
 	int error_status = 0;
 	struct mpc5xxx_gpio *gpio = (struct mpc5xxx_gpio *)MPC5XXX_GPIO;
@@ -1117,7 +1123,7 @@ static void sm501_backlight (unsigned int state)
 }
 #endif /* !CONFIG_FO300 & !CONFIG_TQM5200S */
 
-int cmd_fkt(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int cmd_fkt(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int rcode;
 

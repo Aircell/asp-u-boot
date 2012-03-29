@@ -26,7 +26,7 @@
 
 #include <mg_disk.h>
 
-int do_mg_disk_cmd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mg_disk_cmd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	u32 from, to, size;
 
@@ -54,14 +54,15 @@ int do_mg_disk_cmd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		break;
 	default:
-		return cmd_usage(cmdtp);
+		printf("Usage:\n%s\n", cmdtp->usage);
+		return 1;
 	}
 	return 0;
 }
 
 U_BOOT_CMD(
 	mgd,	5,	0,	do_mg_disk_cmd,
-	"mgine m[g]flash command\n",
+	"mgd     - mgine m[g]flash command\n",
 	": mgine mflash IO mode (disk) command\n"
 	"    - initialize : mgd init\n"
 	"    - random read : mgd read [from] [to] [size]\n"

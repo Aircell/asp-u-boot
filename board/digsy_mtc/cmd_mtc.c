@@ -68,15 +68,17 @@ static void mtc_calculate_checksum(tx_msp_cmd *packet)
 		packet->cks += buff[i];
 }
 
-static int do_mtc_led(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
 	int err;
 	int i;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return -1;
+	}
 
 	memset(&pcmd, 0, sizeof(pcmd));
 	memset(&prx, 0, sizeof(prx));
@@ -118,7 +120,7 @@ static int do_mtc_led(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return err;
 }
 
-static int do_mtc_key(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_key(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
@@ -140,15 +142,17 @@ static int do_mtc_key(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return err;
 }
 
-static int do_mtc_digout(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_digout(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
 	int err;
 	uchar channel_mask = 0;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return -1;
+	}
 
 	if (strncmp(argv[1], "on", 2) == 0)
 		channel_mask |= 1;
@@ -167,15 +171,17 @@ static int do_mtc_digout(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 	return err;
 }
 
-static int do_mtc_digin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_digin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
 	int err;
 	uchar channel_num = 0;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return -1;
+	}
 
 	channel_num = simple_strtol(argv[1], NULL, 10);
 	if ((channel_num != 1) && (channel_num != 2)) {
@@ -199,7 +205,7 @@ static int do_mtc_digin(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 	return err;
 }
 
-static int do_mtc_appreg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_appreg(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
@@ -226,7 +232,7 @@ static int do_mtc_appreg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 	return err;
 }
 
-static int do_mtc_version(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_version(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
@@ -248,7 +254,7 @@ static int do_mtc_version(cmd_tbl_t *cmdtp, int flag, int argc, char * const arg
 	return err;
 }
 
-static int do_mtc_state(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_state(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
@@ -275,7 +281,7 @@ static int do_mtc_state(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 	return err;
 }
 
-static int do_mtc_help(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+static int do_mtc_help(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 cmd_tbl_t cmd_mtc_sub[] = {
 	U_BOOT_CMD_MKENT(led, 3, 1, do_mtc_led,
@@ -302,11 +308,11 @@ cmd_tbl_t cmd_mtc_sub[] = {
 	"[command] - get help for command\n"),
 };
 
-static int do_mtc_help(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtc_help(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	extern int _do_help(cmd_tbl_t *cmd_start, int cmd_items,
 			    cmd_tbl_t *cmdtp, int flag,
-			    int argc, char * const argv[]);
+			    int argc, char *argv[]);
 #ifdef CONFIG_SYS_LONGHELP
 	puts("mtc ");
 #endif
@@ -314,7 +320,7 @@ static int do_mtc_help(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 			ARRAY_SIZE(cmd_mtc_sub), cmdtp, flag, argc, argv);
 }
 
-int cmd_mtc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int cmd_mtc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	cmd_tbl_t *c;
 	int err = 0;
@@ -326,7 +332,8 @@ int cmd_mtc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return c->cmd(c, flag, argc, argv);
 	} else {
 		/* Unrecognized command */
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	return err;

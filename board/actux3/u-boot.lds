@@ -30,12 +30,12 @@ SECTIONS
 
 	. = ALIGN (4);
 	.text : {
-		arch/arm/cpu/ixp/start.o (.text)
-		lib/string.o (.text)
-		lib/vsprintf.o (.text)
-		arch/arm/lib/board.o (.text)
+		cpu/ixp/start.o (.text)
+		lib_generic/string.o (.text)
+		lib_generic/vsprintf.o (.text)
+		lib_arm/board.o (.text)
 		common/dlmalloc.o (.text)
-		arch/arm/cpu/ixp/cpu.o (.text)
+		cpu/ixp/cpu.o (.text)
 
 		. = env_offset;
 		common/env_embedded.o (.ppcenv)

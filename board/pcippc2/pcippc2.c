@@ -69,7 +69,7 @@ phys_size_t initdram (int board_type)
 	return cpc710_ram_init ();
 }
 
-int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	out32 (REG (CPC0, SPOR), 0);
 	iobarrier_rw ();
@@ -206,7 +206,7 @@ void watchdog_reset (void)
 }
 
 #if defined(CONFIG_CMD_BSP)
-int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	switch (argc) {
 	case 1:
@@ -232,7 +232,8 @@ int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	default:
 		break;
 	}
-	return cmd_usage(cmdtp);
+	cmd_usage(cmdtp);
+	return 1;
 }
 
 U_BOOT_CMD(

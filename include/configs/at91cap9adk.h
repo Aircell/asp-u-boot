@@ -27,10 +27,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_AT91_LEGACY
-
 /* ARM asynchronous clock */
-#define CONFIG_SYS_AT91_MAIN_CLOCK	12000000	/* 12 MHz crystal */
+#define AT91_MAIN_CLOCK		12000000	/* 12 MHz crystal */
 #define CONFIG_SYS_HZ		1000
 
 #define CONFIG_ARM926EJS	1	/* This is an ARM926EJS Core	*/
@@ -49,7 +47,6 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_AT91_GPIO	1
 #define CONFIG_ATMEL_USART	1
 #undef CONFIG_USART0
 #undef CONFIG_USART1
@@ -134,6 +131,7 @@
 #define CONFIG_SYS_NAND_BASE			0x40000000
 #define CONFIG_SYS_NAND_DBW_8			1
 
+#define CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 #endif
 
 /* Ethernet */

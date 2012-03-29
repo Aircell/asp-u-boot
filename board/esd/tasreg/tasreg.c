@@ -29,7 +29,8 @@
 
 
 /* Prototypes */
-int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int gunzip(void *, int, unsigned char *, unsigned long *);
+int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len);
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len);
 
@@ -219,7 +220,7 @@ int i2c_probe(uchar addr);
 
 /*
  */
-int do_iploop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_iploop(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 
@@ -254,7 +255,7 @@ U_BOOT_CMD(
 
 /*
  */
-int do_codec(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_codec(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	uchar buf[8];
 
@@ -307,7 +308,7 @@ U_BOOT_CMD(
 
 /*
  */
-int do_saa(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_saa(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 	ulong instr;
@@ -340,7 +341,7 @@ U_BOOT_CMD(
 
 /*
  */
-int do_iwrite(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_iwrite(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 	ulong data0;
@@ -379,7 +380,7 @@ U_BOOT_CMD(
 
 /*
  */
-int do_iread(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_iread(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 	ulong cnt;
@@ -411,7 +412,7 @@ U_BOOT_CMD(
 
 /*
  */
-int do_ireadl(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_ireadl(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr;
 	uchar buf[32];

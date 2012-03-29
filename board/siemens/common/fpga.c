@@ -222,7 +222,7 @@ static int fpga_load (fpga_t* fpga, ulong addr, int checkall)
 
 /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     ulong addr = 0;
     int i;
@@ -286,7 +286,8 @@ int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     return 0;
 
  failure:
-    return cmd_usage(cmdtp);
+    cmd_usage(cmdtp);
+    return 1;
 }
 
 U_BOOT_CMD(

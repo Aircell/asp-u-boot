@@ -24,7 +24,6 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
-#include <netdev.h>
 #include <asm/arch/omap2420.h>
 #include <asm/io.h>
 #include <asm/arch/bits.h>
@@ -95,6 +94,7 @@ void s_init(void)
  ********************************************************/
 int misc_init_r(void)
 {
+	ether_init();		/* better done here so timers are init'ed */
 	return (0);
 }
 
@@ -138,14 +138,13 @@ void wait_for_command_complete(unsigned int wd_base)
 }
 
 /*******************************************************************
- * Routine:board_eth_init
+ * Routine:ether_init
  * Description: take the Ethernet controller out of reset and wait
  *		   for the EEPROM load to complete.
  ******************************************************************/
-int board_eth_init(bd_t *bis)
+void ether_init(void)
 {
-	int rc = 0;
-#ifdef CONFIG_LAN91C96
+#ifdef CONFIG_DRIVER_LAN91C96
 	int cnt = 20;
 
 	__raw_writeb(0x03, OMAP2420_CTRL_BASE + 0x0f2);	/*protect->gpio74 */
@@ -172,10 +171,10 @@ int board_eth_init(bd_t *bis)
 
 	mask_config_reg(ETH_CONTROL_REG, 0x01);
 	udelay(1000);
-	rc = lan91c96_initialize(0, CONFIG_LAN91C96_BASE);
+
 eth_reset_err_out:
+	return;
 #endif
-	return rc;
 }
 
 /**********************************************

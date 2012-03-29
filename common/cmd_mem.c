@@ -43,7 +43,7 @@
 #define PRINTF(fmt,args...)
 #endif
 
-static int mod_mem(cmd_tbl_t *, int, int, int, char * const []);
+static int mod_mem(cmd_tbl_t *, int, int, int, char *[]);
 
 /* Display values from last command.
  * Memory modify remembered values are different from display memory.
@@ -60,7 +60,7 @@ static	ulong	base_address = 0;
  *	md{.b, .w, .l} {addr} {len}
  */
 #define DISP_LINE_LEN	16
-int do_mem_md ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_md ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr, length;
 #if defined(CONFIG_HAS_DATAFLASH)
@@ -76,8 +76,10 @@ int do_mem_md ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	size = dp_last_size;
 	length = dp_last_length;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	if ((flag & CMD_FLAG_REPEAT) == 0) {
 		/* New command specified.  Check for a size specification.
@@ -156,22 +158,24 @@ int do_mem_md ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return (rc);
 }
 
-int do_mem_mm ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_mm ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	return mod_mem (cmdtp, 1, flag, argc, argv);
 }
-int do_mem_nm ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_nm ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	return mod_mem (cmdtp, 0, flag, argc, argv);
 }
 
-int do_mem_mw ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_mw ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr, writeval, count;
 	int	size;
 
-	if ((argc < 3) || (argc > 4))
-		return cmd_usage(cmdtp);
+	if ((argc < 3) || (argc > 4)) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Check for size specification.
 	*/
@@ -207,13 +211,15 @@ int do_mem_mw ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 #ifdef CONFIG_MX_CYCLIC
-int do_mem_mdc ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_mdc ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int i;
 	ulong count;
 
-	if (argc < 4)
-		return cmd_usage(cmdtp);
+	if (argc < 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	count = simple_strtoul(argv[3], NULL, 10);
 
@@ -234,13 +240,15 @@ int do_mem_mdc ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int do_mem_mwc ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_mwc ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int i;
 	ulong count;
 
-	if (argc < 4)
-		return cmd_usage(cmdtp);
+	if (argc < 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	count = simple_strtoul(argv[3], NULL, 10);
 
@@ -262,14 +270,16 @@ int do_mem_mwc ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 #endif /* CONFIG_MX_CYCLIC */
 
-int do_mem_cmp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_cmp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr1, addr2, count, ngood;
 	int	size;
 	int     rcode = 0;
 
-	if (argc != 4)
-		return cmd_usage(cmdtp);
+	if (argc != 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Check for size specification.
 	*/
@@ -345,13 +355,15 @@ int do_mem_cmp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return rcode;
 }
 
-int do_mem_cp ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_cp ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr, dest, count;
 	int	size;
 
-	if (argc != 4)
-		return cmd_usage(cmdtp);
+	if (argc != 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Check for size specification.
 	*/
@@ -451,7 +463,7 @@ int do_mem_cp ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int do_mem_base (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_base (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	if (argc > 1) {
 		/* Set new base address.
@@ -464,7 +476,7 @@ int do_mem_base (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-int do_mem_loop (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_loop (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr, length, i, junk;
 	int	size;
@@ -472,8 +484,10 @@ int do_mem_loop (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	volatile ushort *shortp;
 	volatile u_char	*cp;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Check for a size spefication.
 	 * Defaults to long if no or incorrect specification.
@@ -533,7 +547,7 @@ int do_mem_loop (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 #ifdef CONFIG_LOOPW
-int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong	addr, length, i, data;
 	int	size;
@@ -541,8 +555,10 @@ int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	volatile ushort *shortp;
 	volatile u_char	*cp;
 
-	if (argc < 4)
-		return cmd_usage(cmdtp);
+	if (argc < 4) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	/* Check for a size spefication.
 	 * Defaults to long if no or incorrect specification.
@@ -610,7 +626,7 @@ int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * configured using CONFIG_SYS_ALT_MEMTEST. The complete test loops until
  * interrupted by ctrl-c or by a failure of one of the sub-tests.
  */
-int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	vu_long	*addr, *start, *end;
 	ulong	val;
@@ -968,14 +984,16 @@ int do_mem_mtest (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  *	nm{.b, .w, .l} {addr}
  */
 static int
-mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char * const argv[])
+mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char *argv[])
 {
 	ulong	addr, i;
 	int	nbytes, size;
 	extern char console_buffer[];
 
-	if (argc != 2)
-		return cmd_usage(cmdtp);
+	if (argc != 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 #ifdef CONFIG_BOOT_RETRY_TIME
 	reset_cmd_timeout();	/* got a good command to get here */
@@ -1071,14 +1089,16 @@ mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char * const argv[])
 
 #ifndef CONFIG_CRC32_VERIFY
 
-int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr, length;
 	ulong crc;
 	ulong *ptr;
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	addr = simple_strtoul (argv[1], NULL, 16);
 	addr += base_address;
@@ -1100,7 +1120,7 @@ int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #else	/* CONFIG_CRC32_VERIFY */
 
-int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	ulong addr, length;
 	ulong crc;
@@ -1108,11 +1128,12 @@ int do_mem_crc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	ulong vcrc;
 	int verify;
 	int ac;
-	char * const *av;
+	char **av;
 
 	if (argc < 3) {
-usage:
-		return cmd_usage(cmdtp);
+  usage:
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
 	av = argv + 1;
@@ -1154,14 +1175,16 @@ usage:
 #endif	/* CONFIG_CRC32_VERIFY */
 
 #ifdef CONFIG_CMD_MD5SUM
-int do_md5sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_md5sum(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned long addr, len;
 	unsigned int i;
 	u8 output[16];
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 	len = simple_strtoul(argv[2], NULL, 16);
@@ -1177,14 +1200,16 @@ int do_md5sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 
 #ifdef CONFIG_CMD_SHA1
-int do_sha1sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_sha1sum(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned long addr, len;
 	unsigned int i;
 	u8 output[20];
 
-	if (argc < 3)
-		return cmd_usage(cmdtp);
+	if (argc < 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 	len = simple_strtoul(argv[2], NULL, 16);
@@ -1200,7 +1225,9 @@ int do_sha1sum(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 
 #ifdef CONFIG_CMD_UNZIP
-int do_unzip ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int  gunzip (void *, int, unsigned char *, unsigned long *);
+
+int do_unzip ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned long src, dst;
 	unsigned long src_len = ~0UL, dst_len = ~0UL;
@@ -1214,7 +1241,8 @@ int do_unzip ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			dst = simple_strtoul(argv[2], NULL, 16);
 			break;
 		default:
-			return cmd_usage(cmdtp);
+			cmd_usage(cmdtp);
+			return 1;
 	}
 
 	return !!gunzip((void *) dst, dst_len, (void *) src, &src_len);

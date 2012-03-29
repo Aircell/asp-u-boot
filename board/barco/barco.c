@@ -288,8 +288,14 @@ void barcobcd_boot (void)
 	do_bootm (NULL,0,2,bootm_args);
 }
 
-int barcobcd_boot_image (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int barcobcd_boot_image (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
+#if 0
+	if (argc > 1) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
+#endif
 	barcobcd_boot ();
 
 	return 0;
@@ -334,6 +340,10 @@ void serial_puts (const char *c)
 {
 	return;
 }
+void serial_addr (unsigned int i)
+{
+	return;
+}
 int serial_getc (void)
 {
 	return 0;
@@ -341,4 +351,13 @@ int serial_getc (void)
 int serial_tstc (void)
 {
 	return 0;
+}
+
+unsigned long post_word_load (void)
+{
+	return 0l;
+}
+void post_word_store (unsigned long val)
+{
+	return;
 }

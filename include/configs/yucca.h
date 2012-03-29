@@ -37,7 +37,6 @@
 #define CONFIG_4xx			1	/* ... PPC4xx family	*/
 #define CONFIG_440			1	/* ... PPC440 family	*/
 #define CONFIG_440SPE			1	/* Specifc SPe support	*/
-#define CONFIG_440SPE_REVA		1	/* Support old Rev A.	*/
 #define CONFIG_BOARD_EARLY_INIT_F	1	/* Call board_pre_init	*/
 #define CONFIG_SYS_CLK_FREQ	33333333	/* external freq to pll	*/
 #define EXTCLK_33_33		33333333
@@ -100,7 +99,8 @@
 #define CONFIG_SYS_GBL_DATA_SIZE	128		/* num bytes initial data */
 
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
+#define CONFIG_SYS_POST_WORD_ADDR	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
+#define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_POST_WORD_ADDR
 
 /*-----------------------------------------------------------------------
  * Serial Port
@@ -389,11 +389,6 @@
 #define FPGA_REG1A_PE_SELSOURCE_0	0x0002
 #define FPGA_REG1A_PE_SELSOURCE_1	0x0001
 
-#define FPGA_REG1A_GLED_ENCODE(n)	(FPGA_REG1A_PE0_GLED >> (n))
-#define FPGA_REG1A_YLED_ENCODE(n)	(FPGA_REG1A_PE0_YLED >> (n))
-#define FPGA_REG1A_PWRON_ENCODE(n)	(FPGA_REG1A_PE0_PWRON >> (n))
-#define FPGA_REG1A_REFCLK_ENCODE(n)	(FPGA_REG1A_PE0_REFCLK_ENABLE >> (n))
-
 /*----------------------------------------------------------------------------+
 | PCIe Miscellaneous
 +----------------------------------------------------------------------------*/
@@ -411,9 +406,6 @@
 #define FPGA_REG1C_PE0_PERST		0x0010
 #define FPGA_REG1C_PE1_PERST		0x0008
 #define FPGA_REG1C_PE2_PERST		0x0004
-
-#define FPGA_REG1C_ROOTPOINT_ENCODE(n)	(FPGA_REG1C_PE0_ROOTPOINT >> (n))
-#define FPGA_REG1C_PERST_ENCODE(n)	(FPGA_REG1C_PE0_PERST >> (n))
 
 /*----------------------------------------------------------------------------+
 | Defines

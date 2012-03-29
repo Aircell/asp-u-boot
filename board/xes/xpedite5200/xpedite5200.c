@@ -38,7 +38,7 @@ extern void ft_board_pci_setup(void *blob, bd_t *bd);
 
 int checkboard(void)
 {
-	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
+	volatile ccsr_lbc_t *lbc = (void *)(CONFIG_SYS_MPC85xx_LBC_ADDR);
 	volatile ccsr_local_ecm_t *ecm = (void *)(CONFIG_SYS_MPC85xx_ECM_ADDR);
 	char *s;
 
@@ -65,6 +65,7 @@ int checkboard(void)
 
 static void flash_cs_fixup(void)
 {
+	volatile ccsr_lbc_t *lbc = (void *)(CONFIG_SYS_MPC85xx_LBC_ADDR);
 	int flash_sel;
 
 	/*
@@ -77,11 +78,11 @@ static void flash_cs_fixup(void)
 	printf("FLASH: Executed from FLASH%d\n", flash_sel ? 2 : 1);
 
 	if (flash_sel) {
-		set_lbc_br(0, CONFIG_SYS_BR1_PRELIM);
-		set_lbc_or(0, CONFIG_SYS_OR1_PRELIM);
+		out_be32(&lbc->br0, CONFIG_SYS_BR1_PRELIM);
+		out_be32(&lbc->or0, CONFIG_SYS_OR1_PRELIM);
 
-		set_lbc_br(1, CONFIG_SYS_BR0_PRELIM);
-		set_lbc_or(1, CONFIG_SYS_OR0_PRELIM);
+		out_be32(&lbc->br1, CONFIG_SYS_BR0_PRELIM);
+		out_be32(&lbc->or1, CONFIG_SYS_OR0_PRELIM);
 	}
 }
 

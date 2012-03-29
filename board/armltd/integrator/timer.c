@@ -124,7 +124,7 @@ void set_timer (ulong ticks)
 }
 
 /* delay usec useconds */
-void __udelay (unsigned long usec)
+void udelay (unsigned long usec)
 {
 	ulong tmo, tmp;
 

@@ -36,13 +36,6 @@
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
 
-int __board_mmc_getcd(u8 *cd, struct mmc *mmc) {
-	return -1;
-}
-
-int board_mmc_getcd(u8 *cd, struct mmc *mmc)__attribute__((weak,
-	alias("__board_mmc_getcd")));
-
 int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	return mmc->send_cmd(mmc, cmd, data);
@@ -92,11 +85,6 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 
 	blklen = mmc->write_bl_len;
 
-	if ((start + blkcnt) > mmc->block_dev.lba) {
-		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
-			start + blkcnt, mmc->block_dev.lba);
-		return 0;
-	}
 	err = mmc_set_blocklen(mmc, mmc->write_bl_len);
 
 	if (err) {
@@ -184,7 +172,7 @@ int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size)
 	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
 
 	if (err)
-		goto free_buffer;
+		return err;
 
 	for (i = startblock; i <= endblock; i++) {
 		int segment_size;
@@ -224,11 +212,6 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	if (!mmc)
 		return 0;
 
-	if ((start + blkcnt) > mmc->block_dev.lba) {
-		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
-			start + blkcnt, mmc->block_dev.lba);
-		return 0;
-	}
 	/* We always do full block reads from the card */
 	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
 
@@ -290,15 +273,7 @@ sd_send_op_cond(struct mmc *mmc)
 
 		cmd.cmdidx = SD_CMD_APP_SEND_OP_COND;
 		cmd.resp_type = MMC_RSP_R3;
-
-		/*
-		 * Most cards do not answer if some reserved bits
-		 * in the ocr are set. However, Some controller
-		 * can set bit 7 (reserved for low voltages), but
-		 * how to manage low voltages SD card is not yet
-		 * specified.
-		 */
-		cmd.cmdarg = mmc->voltages & 0xff8000;
+		cmd.cmdarg = mmc->voltages;
 
 		if (mmc->version == SD_VERSION_2)
 			cmd.cmdarg |= OCR_HCS;

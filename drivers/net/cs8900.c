@@ -308,13 +308,14 @@ int cs8900_initialize(u8 dev_num, int base_addr)
 
 	dev = malloc(sizeof(*dev));
 	if (!dev) {
+		free(dev);
 		return 0;
 	}
 	memset(dev, 0, sizeof(*dev));
 
 	priv = malloc(sizeof(*priv));
 	if (!priv) {
-		free(dev);
+		free(priv);
 		return 0;
 	}
 	memset(priv, 0, sizeof(*priv));

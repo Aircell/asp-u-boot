@@ -294,7 +294,6 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_I2C
-#define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI

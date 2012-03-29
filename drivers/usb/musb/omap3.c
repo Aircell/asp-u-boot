@@ -31,15 +31,15 @@
  */
 
 #include <twl4030.h>
-#include <twl6030.h>
 #include "omap3.h"
 
 static int platform_needs_initialization = 1;
 
 struct musb_config musb_cfg = {
-	.regs		= (struct musb_regs *)MENTOR_USB0_BASE,
-	.timeout	= OMAP3_USB_TIMEOUT,
-	.musb_speed	= 0,
+	(struct	musb_regs *)MENTOR_USB0_BASE,
+	OMAP3_USB_TIMEOUT,
+	0,
+	0
 };
 
 /*
@@ -66,12 +66,7 @@ static struct omap3_otg_regs *otg;
 
 #define OMAP3_OTG_SYSSTATUS_RESETDONE			0x0001
 
-/* OMAP4430 has an internal PHY, use it */
-#ifdef CONFIG_OMAP4430
-#define OMAP3_OTG_INTERFSEL_OMAP			0x0000
-#else
 #define OMAP3_OTG_INTERFSEL_OMAP			0x0001
-#endif
 
 #define OMAP3_OTG_FORCESTDBY_STANDBY			0x0001
 
@@ -111,17 +106,11 @@ int musb_platform_init(void)
 			goto end;
 		}
 #endif
-
-#ifdef CONFIG_TWL6030_POWER
-		twl6030_usb_device_settings();
-#endif
-
 		otg = (struct omap3_otg_regs *)OMAP3_OTG_BASE;
 
 		/* Set OTG to always be on */
 		writel(OMAP3_OTG_SYSCONFIG_NO_STANDBY_MODE |
-		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE    |
-                       OMAP3_OTG_SYSCONFIG_SOFTRESET, &otg->sysconfig);
+		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE, &otg->sysconfig);
 
 		/* Set the interface */
 		writel(OMAP3_OTG_INTERFSEL_OMAP, &otg->interfsel);
@@ -132,25 +121,13 @@ int musb_platform_init(void)
 		writel(stdby, &otg->forcestdby);
 
 #ifdef CONFIG_OMAP3_EVM
-		musb_cfg.extvbus = omap3_evm_need_extvbus();
-#endif
-
-#ifdef CONFIG_OMAP4430
-		u32 *usbotghs_control = (u32 *)(CTRL_BASE + 0x33C);
-		*usbotghs_control = 0x15;
+		if (get_omap3_evm_rev() >= OMAP3EVM_BOARD_GEN_2)
+			musb_cfg.extvbus = 1;
 #endif
 		platform_needs_initialization = 0;
-	} else {
-		// Always reset the module
-
-		/* Set OTG to always be on */
-		writel(OMAP3_OTG_SYSCONFIG_NO_STANDBY_MODE |
-		       OMAP3_OTG_SYSCONFIG_NO_IDLE_MODE    |
-                       OMAP3_OTG_SYSCONFIG_SOFTRESET, &otg->sysconfig);
 	}
 
 	ret = platform_needs_initialization;
-
 #ifdef CONFIG_TWL4030_USB
 end:
 #endif

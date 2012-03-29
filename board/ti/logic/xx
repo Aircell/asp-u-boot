@@ -1,0 +1,8 @@
+Files config.mk and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/config.mk differ
+Files logic.c and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/logic.c differ
+Files logic-data.c and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/logic-data.c differ
+Files logic-gpio.c and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/logic-gpio.c differ
+Files logic-gpio.h and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/logic-gpio.h differ
+Files logic.h and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/logic.h differ
+Files Makefile and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/Makefile differ
+Files product_id.h and /home/tarr/work/Aircell/CloudSurfer/SW/p3/cloudsurfer-root/u-boot/board/logicpd/logic/product_id.h differ

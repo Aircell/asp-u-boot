@@ -193,7 +193,7 @@ void logbuff_log(char *msg)
  * Return:      None
  *
  */
-int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *s;
 	unsigned long i, start, size;
@@ -241,10 +241,12 @@ int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			}
 			return 0;
 		}
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 
 	default:
-		return cmd_usage(cmdtp);
+		cmd_usage(cmdtp);
+		return 1;
 	}
 }
 

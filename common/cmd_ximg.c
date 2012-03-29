@@ -31,19 +31,10 @@
 #include <common.h>
 #include <command.h>
 #include <image.h>
-#include <watchdog.h>
-#if defined(CONFIG_BZIP2)
-#include <bzlib.h>
-#endif
 #include <asm/byteorder.h>
 
-#ifndef CONFIG_SYS_XIMG_LEN
-/* use 8MByte as default max gunzip size */
-#define CONFIG_SYS_XIMG_LEN	0x800000
-#endif
-
 int
-do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	ulong		addr = load_addr;
 	ulong		dest = 0;
@@ -59,8 +50,6 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	const void	*fit_data;
 	size_t		fit_len;
 #endif
-	uint		unc_len = CONFIG_SYS_XIMG_LEN;
-	uint8_t		comp;
 
 	verify = getenv_yesno ("verify");
 
@@ -103,10 +92,8 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		}
 
-		comp = image_get_comp (hdr);
-		if ((comp != IH_COMP_NONE) && (argc < 4)) {
-			printf("Must specify load address for %s command "
-					"with compressed image\n",
+		if (image_get_comp (hdr) != IH_COMP_NONE) {
+			printf("Wrong Compression Type for %s command\n",
 					cmdtp->name);
 			return 1;
 		}
@@ -151,11 +138,9 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		}
 
-		if (fit_image_check_comp (fit_hdr, noffset, IH_COMP_NONE)
-		    && (argc < 4)) {
-			printf("Must specify load address for %s command "
-				"with compressed image\n",
-				cmdtp->name);
+		if (fit_image_check_comp (fit_hdr, noffset, IH_COMP_NONE)) {
+			printf("Wrong Compression Type for %s command\n",
+					cmdtp->name);
 			return 1;
 		}
 
@@ -168,15 +153,8 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		}
 
 		/* get subimage data address and length */
-		if (fit_image_get_data (fit_hdr, noffset,
-					&fit_data, &fit_len)) {
+		if (fit_image_get_data (fit_hdr, noffset, &fit_data, &fit_len)) {
 			puts ("Could not find script subimage data\n");
-			return 1;
-		}
-
-		if (fit_image_get_comp (fit_hdr, noffset, &comp)) {
-			puts ("Could not find script subimage "
-				"compression type\n");
 			return 1;
 		}
 
@@ -190,68 +168,7 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	if (argc > 3) {
-		switch (comp) {
-		case IH_COMP_NONE:
-#if defined(CONFIG_HW_WATCHDOG) || defined(CONFIG_WATCHDOG)
-			{
-				size_t l = len;
-				size_t tail;
-				void *to = (void *) dest;
-				void *from = (void *)data;
-
-				printf ("   Loading part %d ... ", part);
-
-				while (l > 0) {
-					tail = (l > CHUNKSZ) ? CHUNKSZ : l;
-					WATCHDOG_RESET();
-					memmove (to, from, tail);
-					to += tail;
-					from += tail;
-					l -= tail;
-				}
-			}
-#else	/* !(CONFIG_HW_WATCHDOG || CONFIG_WATCHDOG) */
-			printf ("   Loading part %d ... ", part);
-			memmove ((char *) dest, (char *)data, len);
-#endif	/* CONFIG_HW_WATCHDOG || CONFIG_WATCHDOG */
-			break;
-		case IH_COMP_GZIP:
-			printf ("   Uncompressing part %d ... ", part);
-			if (gunzip ((void *) dest, unc_len,
-				    (uchar *) data, &len) != 0) {
-				puts ("GUNZIP ERROR - image not loaded\n");
-				return 1;
-			}
-			break;
-#if defined(CONFIG_BZIP2)
-		case IH_COMP_BZIP2:
-			{
-				int i;
-
-				printf ("   Uncompressing part %d ... ", part);
-				/*
-				 * If we've got less than 4 MB of malloc()
-				 * space, use slower decompression algorithm
-				 * which requires at most 2300 KB of memory.
-				 */
-				i = BZ2_bzBuffToBuffDecompress(
-					(char*)ntohl(hdr->ih_load),
-					&unc_len, (char *)data, len,
-					CONFIG_SYS_MALLOC_LEN < (4096 * 1024),
-					0);
-				if (i != BZ_OK) {
-					printf ("BUNZIP2 ERROR %d - "
-						"image not loaded\n", i);
-					return 1;
-				}
-			}
-			break;
-#endif /* CONFIG_BZIP2 */
-		default:
-			printf ("Unimplemented compression type %d\n", comp);
-			return 1;
-		}
-		puts ("OK\n");
+		memcpy((char *) dest, (char *) data, len);
 	}
 
 	sprintf(pbuf, "%8lx", data);
@@ -262,8 +179,7 @@ do_imgextract(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-U_BOOT_CMD(
-	imxtract, 4, 1, do_imgextract,
+U_BOOT_CMD(imxtract, 4, 1, do_imgextract,
 	"extract a part of a multi-image",
 	"addr part [dest]\n"
 	"    - extract <part> from legacy image at <addr> and copy to <dest>"

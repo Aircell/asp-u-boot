@@ -190,7 +190,7 @@ static int ubi_remove_vol(char *volume)
 {
 	int i, err, reserved_pebs;
 	int found = 0, vol_id = 0;
-	struct ubi_volume *vol = NULL;
+	struct ubi_volume *vol;
 
 	for (i = 0; i < ubi->vtbl_slots; i++) {
 		vol = ubi->volumes[i];
@@ -436,14 +436,16 @@ static int ubi_dev_scan(struct mtd_info *info, char *ubidev,
 	return 0;
 }
 
-static int do_ubi(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_ubi(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	size_t size = 0;
 	ulong addr = 0;
 	int err = 0;
 
-	if (argc < 2)
-		return cmd_usage(cmdtp);
+	if (argc < 2) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
 
 	if (mtdparts_init() != 0) {
 		printf("Error initializing mtdparts!\n");
@@ -469,8 +471,10 @@ static int do_ubi(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			return 0;
 		}
 
-		if (argc < 3)
-			return cmd_usage(cmdtp);
+		if (argc < 3) {
+			cmd_usage(cmdtp);
+			return 1;
+		}
 
 		/* todo: get dev number for NAND... */
 		ubi_dev.nr = 0;
@@ -598,8 +602,7 @@ static int do_ubi(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	return -1;
 }
 
-U_BOOT_CMD(
-	ubi, 6, 1, do_ubi,
+U_BOOT_CMD(ubi, 6, 1, do_ubi,
 	"ubi commands",
 	"part [part] [offset]\n"
 		" - Show or set current partition (with optional VID"

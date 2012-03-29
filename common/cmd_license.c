@@ -29,8 +29,9 @@
 #include <command.h>
 #include <malloc.h>
 #include <license.h>
+int gunzip(void *, int, unsigned char *, unsigned long *);
 
-int do_license(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_license(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *tok, *dst = malloc(LICENSE_MAX);
 	unsigned long len = LICENSE_MAX;
@@ -49,8 +50,7 @@ int do_license(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-U_BOOT_CMD(
-	license, 1, 1, do_license,
+U_BOOT_CMD(license, 1, 1, do_license,
 	"print GPL license text",
 	""
 );

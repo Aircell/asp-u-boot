@@ -33,7 +33,7 @@ SECTIONS
 
   .bootpg 0xF7FBF000 :
   {
-    arch/powerpc/cpu/ppc4xx/start.o	(.bootpg)
+    cpu/ppc4xx/start.o	(.bootpg)
   } = 0xffff
 
   /* Read-only sections, merged into text segment: */
@@ -65,7 +65,7 @@ SECTIONS
     /* WARNING - the following is hand-optimized to fit within	*/
     /* the sector layout of our flash chips!	XXX FIXME XXX	*/
 
-    arch/powerpc/cpu/ppc4xx/start.o	(.text)
+    cpu/ppc4xx/start.o	(.text)
 
     *(.text)
     *(.got1)
