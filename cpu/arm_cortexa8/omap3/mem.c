@@ -254,10 +254,12 @@ int do_dump_mux_config(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[
 			CONTROL_PADCONF_SYS_32K,	/* 0x0A04 */
 			CONTROL_PADCONF_D2D_SWAKEUP,	/* 0x0A4C */
 		},
+#ifndef CONFIG_DM3730LOGIC
 		{
 			CONTROL_PADCONF_ETK_CLK_ES2,	/* 0x05D8 */
 			CONTROL_PADCONF_ETK_D15_ES2,	/* 0x05FA */
 		},
+#endif
 	};
 
 	for (i=0; i<ARRAY_SIZE(mux_offsets); ++i) {

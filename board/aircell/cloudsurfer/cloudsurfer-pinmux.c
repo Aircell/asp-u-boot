@@ -190,11 +190,6 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MMC1_DAT1),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT1*/
 	MUX_VAL(CP(MMC1_DAT2),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT2*/
 	MUX_VAL(CP(MMC1_DAT3),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT3*/
-	MUX_VAL(CP(MMC1_DAT4),		(IEN  | PTD | EN  | M7)); /*MMC1_DAT4*/
-	MUX_VAL(CP(MMC1_DAT5),		(IEN  | PTD | EN  | M7)); /*MMC1_DAT5*/
-	MUX_VAL(CP(MMC1_DAT6),		(IEN  | PTD | EN  | M7)); /*MMC1_DAT6*/
-/* TARR - RINGER_ENABLE */
-	MUX_VAL(CP(MMC1_DAT7),		(IDIS  | PTD | DIS  | M4)); /*GPIO_129*/
 /* TARR - SPI for LCD */
 	MUX_VAL(CP(MMC2_CLK),		(IEN  | PTU | DIS  | M1)); /*MCSPI3_CLK*/
 	MUX_VAL(CP(MMC2_CMD),		(IEN  | PTU | DIS  | M1)); /*MCSPI3_SMO*/
@@ -297,12 +292,12 @@ void set_muxconf_regs(void)
     MUX_VAL(CP(MCSPI2_SOMI), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA5*/
     MUX_VAL(CP(MCSPI2_CS0), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA6*/
     MUX_VAL(CP(MCSPI2_CS1), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA3*/
-    MUX_VAL(CP(ETK_D10_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB2_CLK*/
-    MUX_VAL(CP(ETK_D11_ES2), (IDIS | PTU | DIS | M3)); /*HSUSB2_STP*/
-    MUX_VAL(CP(ETK_D12_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DIR*/
-    MUX_VAL(CP(ETK_D13_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_NXT*/
-    MUX_VAL(CP(ETK_D14_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA0*/
-    MUX_VAL(CP(ETK_D15_ES2), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA1*/
+    MUX_VAL(CP(ETK_D10), (IDIS | PTU | DIS | M3)); /*HSUSB2_CLK*/
+    MUX_VAL(CP(ETK_D11), (IDIS | PTU | DIS | M3)); /*HSUSB2_STP*/
+    MUX_VAL(CP(ETK_D12), (IEN  | PTU | DIS | M3)); /*HSUSB2_DIR*/
+    MUX_VAL(CP(ETK_D13), (IEN  | PTU | DIS | M3)); /*HSUSB2_NXT*/
+    MUX_VAL(CP(ETK_D14), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA0*/
+    MUX_VAL(CP(ETK_D15), (IEN  | PTU | DIS | M3)); /*HSUSB2_DATA1*/
 
  /*Control and debug */
 	MUX_VAL(CP(SYS_32K),		(IEN  | PTD | DIS | M0)); /*SYS_32K*/
@@ -311,8 +306,7 @@ void set_muxconf_regs(void)
 
 /* TARR - WIFI */
 	MUX_VAL(CP(SYS_BOOT0),		(IEN  | PTD | DIS | M4)); /*GPIO_2*/
-//	MUX_VAL(CP(SYS_BOOT1),		(IDIS  | PTD | DIS | M4)); /*GPIO_3 */
-	MUX_VAL(CP(SYS_BOOT1),		(IEN  | PTD | DIS | M4)); /*GPIO_3 */
+	MUX_VAL(CP(SYS_BOOT1),		(IDIS  | PTD | DIS | M4)); /*GPIO_3 */
 
 	MUX_VAL(CP(SYS_BOOT2),		(IEN  | PTD | DIS | M4)); /*GPIO_4*/
 	MUX_VAL(CP(SYS_BOOT3),		(IEN  | PTD | DIS | M4)); /*GPIO_5*/
@@ -335,19 +329,9 @@ void set_muxconf_regs(void)
 /* TARR - ACELL_INTERRUPT */
 	MUX_VAL(CP(JTAG_EMU1),		(IDIS  | PTU | EN | M4)); /*GPIO_31*/
 
-	MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M0)); /*ETK_CLK*/
-	MUX_VAL(CP(ETK_CTL_ES2),	(IDIS | PTD | DIS | M0)); /*ETK_CTL*/
-	MUX_VAL(CP(ETK_D0_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D0*/
-	MUX_VAL(CP(ETK_D1_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D1*/
-	MUX_VAL(CP(ETK_D2_ES2 ),	(IEN  | PTD | EN  | M0)); /*ETK_D2*/
-	MUX_VAL(CP(ETK_D3_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D3*/
-	MUX_VAL(CP(ETK_D4_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D4*/
-	MUX_VAL(CP(ETK_D5_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D5*/
-	MUX_VAL(CP(ETK_D6_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D6*/
-	MUX_VAL(CP(ETK_D7_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D7*/
-	MUX_VAL(CP(ETK_D8_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D8*/
-	MUX_VAL(CP(ETK_D9_ES2 ),	(IEN  | PTD | DIS | M0)); /*ETK_D9*/
- 
+/* TARR - RINGER ENABLE - Weirdness!!!!!! */
+	MUX_VAL(CP(GPIO_129),		(IDIS | PTU | DIS | M4)); /*GPIO_129*/
+
 /*Die to Die */
 	MUX_VAL(CP(D2D_MCAD1),		(IEN  | PTD | EN  | M0)); /*d2d_mcad1*/
 	MUX_VAL(CP(D2D_MCAD2),		(IEN  | PTD | EN  | M0)); /*d2d_mcad2*/
