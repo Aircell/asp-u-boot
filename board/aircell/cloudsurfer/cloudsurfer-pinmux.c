@@ -330,7 +330,7 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(JTAG_EMU1),		(IDIS  | PTU | EN | M4)); /*GPIO_31*/
 
 /* TARR - RINGER ENABLE - Weirdness!!!!!! */
-	MUX_VAL(CP(GPIO_129),		(IDIS | PTU | DIS | M4)); /*GPIO_129*/
+	MUX_VAL(CP(GPIO_129),		(IDIS | PTU | EN | M4)); /*GPIO_129*/
 
 /*Die to Die */
 	MUX_VAL(CP(D2D_MCAD1),		(IEN  | PTD | EN  | M0)); /*d2d_mcad1*/
