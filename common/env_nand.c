@@ -298,6 +298,9 @@ void env_relocate_spec (void)
 	tmp_env1 = (env_t *) malloc(CONFIG_ENV_SIZE);
 	tmp_env2 = (env_t *) malloc(CONFIG_ENV_SIZE);
 
+	/* JFK  exec nandecc hw */
+	omap_nand_switch_ecc(1);
+
 	if (readenv(CONFIG_ENV_OFFSET, (u_char *) tmp_env1))
 		puts("No Valid Environment Area Found\n");
 	if (readenv(CONFIG_ENV_OFFSET_REDUND, (u_char *) tmp_env2))
@@ -350,8 +353,8 @@ void env_relocate_spec (void)
 #if !defined(ENV_IS_EMBEDDED)
 	int ret;
 
-    /* JFK  exec nandecc hw */
-    //omap_nand_switch_ecc(1);
+    /* JFK  exec nandecc chip */
+    omap_nand_switch_ecc(NAND_ECC_CHIP);
 
 	ret = readenv(CONFIG_ENV_OFFSET, (u_char *) env_ptr);
 	if (ret)
