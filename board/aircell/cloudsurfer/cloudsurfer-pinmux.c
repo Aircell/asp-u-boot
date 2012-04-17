@@ -205,10 +205,12 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M3)); /*MMC3_DAT1*/
 	MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M3)); /*MMC3_DAT2 */
 	MUX_VAL(CP(MMC2_DAT7),		(IEN  | PTU | EN  | M3)); /*MMC3_DAT3*/
+
+/* JFK Voice Channel */
 	MUX_VAL(CP(MCBSP3_DX),		(IDIS  | PTD | DIS  | M0)); /*McBSP3_DX*/
-	MUX_VAL(CP(MCBSP3_DR),		(IDIS  | PTD | DIS  | M0)); /*McBSP3_DR*/
-	MUX_VAL(CP(MCBSP3_CLKX),	(IDIS  | PTD | DIS  | M0)); /*McBSP3_CLKX  */
-	MUX_VAL(CP(MCBSP3_FSX),		(IDIS  | PTD | DIS  | M0)); /*McBSP3_FSX*/
+	MUX_VAL(CP(MCBSP3_DR),		(IEN  | PTD | DIS  | M0)); /*McBSP3_DR*/
+	MUX_VAL(CP(MCBSP3_CLKX),	(IEN  | PTD | DIS  | M0)); /*McBSP3_CLKX  */
+	MUX_VAL(CP(MCBSP3_FSX),		(IEN  | PTD | DIS  | M0)); /*McBSP3_FSX*/
 
 	MUX_VAL(CP(UART2_CTS),		(IEN  | PTD | EN  | M7)); /*UART2_CTS*/
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | EN  | M7)); /*UART2_RTS*/
