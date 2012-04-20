@@ -204,13 +204,14 @@
 	"loadaddr=0x81000000\0"						\
 	"rootfsaddr=0x81300000\0"					\
 	"consoledev=ttyS0\0"						\
+	"rootdev=/dev/mtdblock4\0"				\
 	"rootpath=/opt/nfs-exports/ltib-omap\0"				\
 	"ramdisksize=89000\0"						\
 	"kernelimage=uImage\0"						\
 	"nfsoptions=,wsize=1500,rsize=1500\0"				\
 	"memsize=126M\0" \
 	"nfsboot=bootp; setenv bootargs mem=${memsize} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
-	"flashboot=setenv bootargs mem=${memsize} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/mtdblock4 rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs}; nand read ${loadaddr} 280000 400000; bootm ${loadaddr}\0" \
+	"flashboot=setenv bootargs mem=${memsize} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdev} rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs}; nand read ${loadaddr} 280000 400000; bootm ${loadaddr}\0" \
 	"install=mmc init; fatload mmc 0 80000000 install.img; source\0" \
     "sdboot=setenv bootargs mem=${memsize} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rootfstype=ext3 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
