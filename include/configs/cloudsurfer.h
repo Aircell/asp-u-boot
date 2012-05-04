@@ -232,9 +232,9 @@
 #define CONFIG_PREBOOT \
     "echo ==========================NOTICE============================;"    \
     "echo ;" \
-    "echo Type 'run netprep'     to prepare the flash for netbooting;" \
+    "echo Type 'run install'     to install a load from sd;" \
     "echo Type 'run flashboot'  to boot from flash;" \
-    "echo Type 'run sdtboot'     to boot from sdcard;" \
+    "echo Type 'run sdboot'     to boot from sdcard;" \
     "echo Type 'run nfsboot'     to boot from the network;" \
     "echo ;" \
     "echo Use 'setenv bootcmd' to set your default, which is currently: ;" \
@@ -259,7 +259,7 @@
     "mem2=mem=128M@0x88000000\0" \
     "nfsboot=bootp; setenv bootargs mem=${memsize} omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
     "flashboot=setenv bootargs mem=${memsize} ${mem2}  omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdev} rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs}; nand read ${loadaddr} 280000 400000; bootm ${loadaddr}\0" \
-    "netprep=mmc init; fatload mmc 0 80000000 netboot.img; source\0" \
+    "install=mmc init; fatload mmc 0 80000000 install.img; source\0" \
     "sdboot=setenv bootargs mem=${memsize} vram=${vram} omapfb.vra,=${fbram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rootfstype=ext3 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 #define CONFIG_BOOTCOMMAND \

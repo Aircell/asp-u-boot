@@ -130,7 +130,7 @@ CONFIG_TWL4030_POWER=y
 CONFIG_JFFS2_NAND=y
 CONFIG_BOOTP_SUBNETMASK="0x00000001"
 CONFIG_MUSB_HCD=y
-CONFIG_PREBOOT="echo ==========================NOTICE============================;echo ;echo Type 'run netprep'     to prepare the flash for netbooting;echo Type 'run flashboot'  to boot from flash;echo Type 'run sdtboot'     to boot from sdcard;echo Type 'run nfsboot'     to boot from the network;echo ;echo Use 'setenv bootcmd' to set your default, which is currently: ;printenv bootcmd ;echo Then run 'saveenv' to make your changes persistent;echo ==========================******============================;"
+CONFIG_PREBOOT="echo ==========================NOTICE============================;echo ;echo Type 'run install'     to install a load from sd;echo Type 'run flashboot'  to boot from flash;echo Type 'run sdboot'     to boot from sdcard;echo Type 'run nfsboot'     to boot from the network;echo ;echo Use 'setenv bootcmd' to set your default, which is currently: ;printenv bootcmd ;echo Then run 'saveenv' to make your changes persistent;echo ==========================******============================;"
 CONFIG_CMD_MMC=y
 CONFIG_ARMCORTEXA8=y
 CONFIG_MTD_DEBUG_VERBOSE="-1"
