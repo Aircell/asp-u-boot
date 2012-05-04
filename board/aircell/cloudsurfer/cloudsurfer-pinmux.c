@@ -196,7 +196,7 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(MMC2_DAT0),		(IEN  | PTU | DIS  | M1)); /*MCSPI3_SMI*/
 	MUX_VAL(CP(MMC2_DAT3),		(IEN  | PTU | DIS  | M1)); /*MCSPI3_CS0*/
 /* TARR - 5VA_ENABLE */
-	MUX_VAL(CP(MMC2_DAT2),		(IDIS  | PTU | DIS  | M0)); /*GPIO_134*/
+	MUX_VAL(CP(MMC2_DAT2),		(IDIS  | PTU | DIS  | M4)); /*GPIO_134*/
 
 	MUX_VAL(CP(MMC2_DAT1),		(IEN  | PTD | EN  | M7)); /*MMC2_DAT1*/
 
@@ -318,7 +318,7 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(SYS_OFF_MODE),	(IEN  | PTD | DIS | M0)); /*SYS_OFF_MODE*/
 	MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M0)); /*SYS_CLKOUT1*/
 /* TARR - LED_ENABLE */
-	MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M0)); /*SYS_CLKOUT2*/
+	MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M4)); /*GPIO_186*/
 
 	MUX_VAL(CP(JTAG_nTRST),		(IEN  | PTD | DIS | M0)); /*JTAG_nTRST*/
 	MUX_VAL(CP(JTAG_TCK),		(IEN  | PTD | DIS | M0)); /*JTAG_TCK*/
