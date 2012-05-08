@@ -52,3 +52,6 @@ partition where the environment resides.
 DEVICEx_ENVSECTORS defines the number of sectors that may be used for
 this environment instance. On NAND this is used to limit the range
 within which bad blocks are skipped, on NOR it is not used.
+
+NOTE: include - these are the extra include files required to build.
+      Copied from agcc/bionic

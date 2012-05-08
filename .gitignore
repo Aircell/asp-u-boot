@@ -13,6 +13,7 @@
 *~
 *.swp
 *.patch
+fw_printenv
 
 #
 # Top-level generic files
