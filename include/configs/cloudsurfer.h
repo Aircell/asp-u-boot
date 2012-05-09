@@ -142,7 +142,7 @@
 
 #ifdef CONFIG_USB_KEYBOARD
 #define CONFIG_SYS_USB_EVENT_POLL
-// #define CONFIG_PREBOOT "usb start"
+#define CONFIG_PREBOOT "usb start"
 #endif /* CONFIG_USB_KEYBOARD */
 
 #endif /* CONFIG_MUSB_HCD */
@@ -230,17 +230,8 @@
 #define CONFIG_BOOTFILE		uImage
 
 #define CONFIG_PREBOOT \
-    "echo ==========================NOTICE============================;"    \
-    "echo ;" \
-    "echo Type 'run install'     to install a load from sd;" \
-    "echo Type 'run flashboot'  to boot from flash;" \
-    "echo Type 'run sdboot'     to boot from sdcard;" \
-    "echo Type 'run nfsboot'     to boot from the network;" \
-    "echo ;" \
-    "echo Use 'setenv bootcmd' to set your default, which is currently: ;" \
-    "printenv bootcmd ;"  \
-    "echo Then run 'saveenv' to make your changes persistent;" \
-    "echo ==========================******============================;" 
+    "setenv preboot \"echo current boot target:; printenv bootcmd;\";"    \
+    "saveenv;" 
 
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -266,7 +257,7 @@
     "sdboot=setenv bootargs mem=${memsize} vram=${vram} omapfb.vra,=${fbram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rootfstype=ext3 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 #define CONFIG_BOOTCOMMAND \
-	"run sdboot"
+	"run reboot"
 
 #define CONFIG_AUTO_COMPLETE	1
 /*
