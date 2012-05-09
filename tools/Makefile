@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-TOOLSUBDIRS =
+TOOLSUBDIRS = env
 
 #
 # Mac OS X / Darwin's C preprocessor is Apple specific.  It
