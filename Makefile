@@ -139,7 +139,7 @@ endif
 
 # The "tools" are needed early, so put this first
 # Don't include stuff already done in $(LIBS)
-SUBDIRS	= tools \
+SUBDIRS	= tools scripts \
 	  examples/standalone \
 	  examples/api
 

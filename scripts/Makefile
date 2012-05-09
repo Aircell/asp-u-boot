@@ -1,10 +1,11 @@
 
 
-all : install.img netboot.img
+all :netboot.img reboot.img
 
 clean : 
-	rm -f install.img netboot.img
+	rm -f install.img netboot.img reboot.img
 
 %.img : %
-	../tools/mkimage -T script -C none -n $^ -d $^ $@
+	../tools/mkimage -T script -C none -n $^ -d $^ $@ ;\
+	
 

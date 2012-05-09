@@ -1,0 +1,28 @@
+
+
+if test "${onetime}" != "" ; then
+	echo One time boot to ${onetime}
+	target=${onetime}
+	label="Onetime"
+	setenv onetime
+	saveenv
+else
+	label="Stable"
+	target=${stable}
+fi
+
+echo ${label} ${target} boot;
+
+if test "${target}" = "bankA" ; then
+	setenv kernelblock 280000
+	setenv rootdev /dev/mtdblock5
+elif test "${target}" = "bankB" ; then
+	setenv kernelblock 680000
+	setenv rootdev /dev/mtdblock6
+else
+	echo Invalid bank ID ${target}
+fi
+
+run flashboot
+
+
