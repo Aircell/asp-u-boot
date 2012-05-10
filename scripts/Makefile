@@ -7,5 +7,8 @@ clean :
 
 %.img : %
 	../tools/mkimage -T script -C none -n $^ -d $^ $@ ;\
+
+_depend:
+
 	
 
