@@ -5,11 +5,12 @@ if test "${onetime}" != "" ; then
 	target=${onetime}
 	label="Onetime"
 	setenv onetime
-	saveenv
 else
 	label="Stable"
 	target=${stable}
 fi
+setenv current ${target}
+saveenv
 
 echo ${label} ${target} boot;
 
