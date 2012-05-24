@@ -64,3 +64,9 @@ cscope.*
 /onenand_ipl/onenand-ipl*
 /onenand_ipl/board/*/onenand*
 /onenand_ipl/board/*/*.S
+include/asm-arm/arch
+include/asm-arm/proc
+scripts/netboot.img
+scripts/reboot.img
+tools/sign-nand-image
+u-boot.bin.ift
