@@ -43,6 +43,7 @@
 #include <asm/mach-types.h>
 #include <twl4030.h>
 #include "cloudsurfer.h"
+#include "cloudsurfer-gpio.h"
 #include "product_id.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -505,8 +506,16 @@ static void fix_flash_sync(void)
 int board_eth_init(bd_t *bis)
 {
 	int rc = 0;
-#ifdef CONFIG_SMC911X
-	rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
-#endif
+
+	puts("Cloudsurfer uses ");
+	/* Determine if the is a corded phone */
+	if ( omap_get_gpio_datain(AIRCELL_BATTERY_POWERED) != 0 ) {
+		/* power off the ethernet chip */
+		puts("WiFi\n");
+		rc = smc911x_powerdown(CONFIG_SMC911X_BASE);
+	} else {
+		puts("Ethernet\n");
+		rc = smc911x_initialize(0, CONFIG_SMC911X_BASE);
+	}
 	return rc;
 }

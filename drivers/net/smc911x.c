@@ -273,3 +273,23 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	eth_register(dev);
 	return 1;
 }
+
+/* TARR - Aircell specifics */
+int smc911x_powerdown(int base_addr)
+{
+    struct eth_device *dev;
+
+    dev = malloc(sizeof(*dev));
+    if (!dev) {
+        return -1;
+    }
+    memset(dev, 0, sizeof(*dev));
+
+    dev->iobase = base_addr;
+
+	smc911x_miiphy_write(dev, 1, PHY_BMCR, PHY_BMCR_POWD);
+
+	free(dev);
+	return 0;
+}
+
