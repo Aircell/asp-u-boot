@@ -103,6 +103,7 @@
  * repeatedly to change the speed and slave addresses.
  */
 void i2c_init(int speed, int slaveaddr);
+void i2c2_init(int speed, int slaveaddr);
 #ifdef CONFIG_SYS_I2C_INIT_BOARD
 void i2c_init_board(void);
 #endif
@@ -150,6 +151,9 @@ int i2c_probe(uchar chip);
  */
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len);
 int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len);
+
+int i2c2_read(uchar chip, uint addr, int alen, uchar *buffer, int len);
+int i2c2_write(uchar chip, uint addr, int alen, uchar *buffer, int len);
 
 /*
  * Utility routines to read/write registers.

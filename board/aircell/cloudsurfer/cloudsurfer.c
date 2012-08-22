@@ -40,6 +40,7 @@
 #include <asm/arch/omap_gpmc.h>
 #include <asm/arch/gpio.h>
 #include <i2c.h>
+#include <asm/arch-omap3/i2c2.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
 #include "cloudsurfer.h"
@@ -170,6 +171,49 @@ static void check_sysconfig_regs(void)
 	}
 }
 
+#define PCA9626B_ADDR		0x70
+#define LEDOUT0			0x1d
+#define PWM0_NO_AUTOINCREMENT	0x02
+static void turn_on_keypad_leds(void)
+{//PCA9626B
+	unsigned char data[32];
+	i2c2_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	data[0] = 0x01;
+	i2c2_write(PCA9626B_ADDR, 0x00, 1, &data[0], 1);	// Bring LED driver chip out of reset
+	udelay(600);	//	delay min 500us
+
+	data[0] = 0xaa;
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 0, 1, &data[0], 1);	// Write PWM enables to all LEDs
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 1, 1, &data[0], 1);	// Write PWM enables to all LEDs
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 2, 1, &data[0], 1);	// Write PWM enables to all LEDs
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 3, 1, &data[0], 1);	// Write PWM enables to all LEDs
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 4, 1, &data[0], 1);	// Write PWM enables to all LEDs
+	i2c2_write(PCA9626B_ADDR, LEDOUT0 + 5, 1, &data[0], 1);	// Write PWM enables to all LEDs
+
+	data[0] = 40;
+	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  0, 1, &data[0], 1);	// Write brightness to zone-5
+	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  1, 1, &data[0], 1);	// Write brightness to zone-8
+	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  2, 1, &data[0], 1);	// Write brightness to zone-2
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  3, 1, &data[0], 1);	// Write brightness to zone-6
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  4, 1, &data[0], 1);	// Write brightness to zone-3
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  5, 1, &data[0], 1);	// Write brightness to zone-menu
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  6, 1, &data[0], 1);	// Write brightness to zone-home
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 11, 1, &data[0], 1);	// Write brightness to zone-red
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 12, 1, &data[0], 1);	// Write brightness to zone-back
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 13, 1, &data[0], 1);	// Write brightness to zone-9
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 14, 1, &data[0], 1);	// Write brightness to zone-pound
+	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 15, 1, &data[0], 1);	// Write brightness to zone-0
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 16, 1, &data[0], 1);	// Write brightness to zone-astrix
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 17, 1, &data[0], 1);	// Write brightness to zone-7
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 18, 1, &data[0], 1);	// Write brightness to zone-4
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 19, 1, &data[0], 1);	// Write brightness to zone-1
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 20, 1, &data[0], 1);	// Write brightness to zone-5
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 21, 1, &data[0], 1);	// Write brightness to zone-S1
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 22, 1, &data[0], 1);	// Write brightness to zone-S2
+//	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 23, 1, &data[0], 1);	// Write brightness to zone-S3
+}
+
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
@@ -177,6 +221,8 @@ static void check_sysconfig_regs(void)
 int misc_init_r(void)
 {
 	printf("Cloudsurfer P3\n");
+	
+	turn_on_keypad_leds();
 
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 

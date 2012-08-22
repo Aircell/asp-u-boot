@@ -22,14 +22,14 @@
 
 #include <common.h>
 
-#include <asm/arch/i2c.h>
+#include <asm/arch/i2c2.h>
 #include <asm/io.h>
 
 static void wait_for_bb (void);
 static u16 wait_for_pin (void);
 static void flush_fifo(void);
 
-void i2c_init (int speed, int slaveadd)
+void i2c2_init (int speed, int slaveadd)
 {
 	int psc, fsscll, fssclh;
 	int hsscll = 0, hssclh = 0;
@@ -121,9 +121,9 @@ void i2c_init (int speed, int slaveadd)
 	writew (0, I2C_CNT);
 }
 
-static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
+static int i2c2_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 {
-	int i2c_error = 0;
+	int i2c2_error = 0;
 	u16 status;
 
 	/* wait until bus not busy */
@@ -143,13 +143,13 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 		writeb (regoffset, I2C_DATA);
 		udelay (20000);
 		if (readw (I2C_STAT) & I2C_STAT_NACK) {
-			i2c_error = 1;
+			i2c2_error = 1;
 		}
 	} else {
-		i2c_error = 1;
+		i2c2_error = 1;
 	}
 
-	if (!i2c_error) {
+	if (!i2c2_error) {
 		/* free bus, otherwise we can't use a combined transction */
 		writew (0, I2C_CON);
 		while (readw (I2C_STAT) || (readw (I2C_CON) & I2C_CON_MST)) {
@@ -176,10 +176,10 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 #endif
 			udelay (20000);
 		} else {
-			i2c_error = 1;
+			i2c2_error = 1;
 		}
 
-		if (!i2c_error) {
+		if (!i2c2_error) {
 			writew (I2C_CON_EN, I2C_CON);
 			while (readw (I2C_STAT)
 			       || (readw (I2C_CON) & I2C_CON_MST)) {
@@ -191,12 +191,12 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 	flush_fifo();
 	writew (0xFFFF, I2C_STAT);
 	writew (0, I2C_CNT);
-	return i2c_error;
+	return i2c2_error;
 }
 
-static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
+static int i2c2_write_byte (u8 devaddr, u8 regoffset, u8 value)
 {
-	int i2c_error = 0;
+	int i2c2_error = 0;
 	u16 status, stat;
 
 	/* wait until bus not busy */
@@ -225,7 +225,7 @@ static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
 			writeb (value, I2C_DATA);
 			writew (I2C_STAT_XRDY, I2C_STAT);
 		} else {
-			i2c_error = 1;
+			i2c2_error = 1;
 		}
 #else
 		/* send out two bytes */
@@ -234,13 +234,13 @@ static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
 		/* must have enough delay to allow BB bit to go low */
 		udelay (50000);
 		if (readw (I2C_STAT) & I2C_STAT_NACK) {
-			i2c_error = 1;
+			i2c2_error = 1;
 		}
 	} else {
-		i2c_error = 1;
+		i2c2_error = 1;
 	}
 
-	if (!i2c_error) {
+	if (!i2c2_error) {
 		int eout = 200;
 
 		writew (I2C_CON_EN, I2C_CON);
@@ -255,7 +255,7 @@ static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
 	flush_fifo();
 	writew (0xFFFF, I2C_STAT);
 	writew (0, I2C_CNT);
-	return i2c_error;
+	return i2c2_error;
 }
 
 static void flush_fifo(void)
@@ -279,7 +279,7 @@ static void flush_fifo(void)
 	}
 }
 
-int i2c_probe (uchar chip)
+int i2c2_probe (uchar chip)
 {
 	int res = 1; /* default = fail */
 
@@ -315,7 +315,7 @@ int i2c_probe (uchar chip)
 	return res;
 }
 
-int i2c_read (uchar chip, uint addr, int alen, uchar * buffer, int len)
+int i2c2_read (uchar chip, uint addr, int alen, uchar * buffer, int len)
 {
 	int i;
 
@@ -330,9 +330,9 @@ int i2c_read (uchar chip, uint addr, int alen, uchar * buffer, int len)
 	}
 
 	for (i = 0; i < len; i++) {
-		if (i2c_read_byte (chip, addr + i, &buffer[i])) {
+		if (i2c2_read_byte (chip, addr + i, &buffer[i])) {
 			printf ("I2C read: I/O error\n");
-			i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+			i2c2_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 			return 1;
 		}
 	}
@@ -340,7 +340,7 @@ int i2c_read (uchar chip, uint addr, int alen, uchar * buffer, int len)
 	return 0;
 }
 
-int i2c_write (uchar chip, uint addr, int alen, uchar * buffer, int len)
+int i2c2_write (uchar chip, uint addr, int alen, uchar * buffer, int len)
 {
 	int i;
 
@@ -355,9 +355,10 @@ int i2c_write (uchar chip, uint addr, int alen, uchar * buffer, int len)
 	}
 
 	for (i = 0; i < len; i++) {
-		if (i2c_write_byte (chip, addr + i, buffer[i])) {
-			printf ("I2C write: I/O error\n");
-			i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+		printf ("I2C2 write: Attempting to write 0x%02x to address 0x%02x\n", buffer[i], addr + i);
+		if (i2c2_write_byte (chip, addr + i, buffer[i])) {
+			printf ("I2C2 write: I/O error\n");
+			i2c2_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 			return 1;
 		}
 	}

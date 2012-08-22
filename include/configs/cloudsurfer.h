@@ -196,6 +196,7 @@
 #define CONFIG_SYS_I2C_BUS		0
 #define CONFIG_SYS_I2C_BUS_SELECT	1
 #define CONFIG_DRIVER_OMAP34XX_I2C	1
+#define CONFIG_DRIVER_OMAP34XX_I2C2	1
 
 /*
  * TWL4030
@@ -255,12 +256,11 @@
     "nfsboot=bootp; setenv bootargs ${mem1} ${mem2} omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
     "flashboot=setenv bootargs ${mem1} ${mem2} omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdev} rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs}; nand read ${loadaddr} ${kernelblock} 400000; bootm ${loadaddr}\0" \
     "install=mmc init; fatload mmc 0 80000000 install.img; source\0" \
-    "restart=nand read 80000000 1fe80000 20000; source\0" \
-    "reboot=run restart\0" \
+    "reboot=nand read 80000000 1fe80000 20000; source\0" \
     "sdboot=setenv bootargs mem=${memsize} vram=${vram} omapfb.vra,=${fbram} omapfb.vrfb=${rotate_type} omapfb.rotate=${rotate} console=${consoledev},${baudrate} root=/dev/mmcblk0p2 rootfstype=ext3 rw rootwait init=/init; mmc init; fatload mmc 0 ${loadaddr} ${kernelimage}; bootm ${loadaddr}\0"
 
 #define CONFIG_BOOTCOMMAND \
-	"run restart"
+	"run reboot"
 
 #define CONFIG_AUTO_COMPLETE	1
 /*

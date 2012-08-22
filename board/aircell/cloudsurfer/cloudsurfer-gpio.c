@@ -190,7 +190,7 @@ void cloudsurfer_gpios(void)
 	/* Enable 5V Digital - OFF */
 	if (!omap_request_gpio(AIRCELL_5VD_ENABLE)) {
 		omap_set_gpio_dataout(AIRCELL_5VD_ENABLE, 0);
-		omap_set_gpio_direction(AIRCELL_5VD_ENABLE, 0);
+		omap_set_gpio_direction(AIRCELL_5VD_ENABLE, 1);			// ON !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/* Battery Powered detect */
@@ -218,7 +218,7 @@ void cloudsurfer_gpios(void)
 	/* LED driver IC - OFF */
 	if (!omap_request_gpio(AIRCELL_LED_ENABLE)) {
 		omap_set_gpio_direction(AIRCELL_LED_ENABLE, 0);
-		omap_set_gpio_dataout(AIRCELL_LED_ENABLE, 0);
+		omap_set_gpio_dataout(AIRCELL_LED_ENABLE, 1);			// ON !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/* earpiece enable - OFF */
