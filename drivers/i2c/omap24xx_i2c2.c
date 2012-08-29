@@ -355,7 +355,7 @@ int i2c2_write (uchar chip, uint addr, int alen, uchar * buffer, int len)
 	}
 
 	for (i = 0; i < len; i++) {
-		printf ("I2C2 write: Attempting to write 0x%02x to address 0x%02x\n", buffer[i], addr + i);
+		//printf ("I2C2 write: Attempting to write 0x%02x to address 0x%02x\n", buffer[i], addr + i);
 		if (i2c2_write_byte (chip, addr + i, buffer[i])) {
 			printf ("I2C2 write: I/O error\n");
 			i2c2_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
