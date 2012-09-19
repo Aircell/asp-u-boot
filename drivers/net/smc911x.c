@@ -106,8 +106,13 @@ static void smc911x_phy_configure(struct eth_device *dev)
 	smc911x_miiphy_write(dev, 1, PHY_BMCR, PHY_BMCR_RESET);
 	mdelay(1);
 	smc911x_miiphy_write(dev, 1, PHY_ANAR, 0x01e1);
-	smc911x_miiphy_write(dev, 1, PHY_BMCR, PHY_BMCR_AUTON |
-				PHY_BMCR_RST_NEG);
+#if 0
+	/* JFK: Disable autoneg to start 10baseT-Full */
+       smc911x_miiphy_write(dev, 1, PHY_BMCR, PHY_BMCR_AUTON |
+                               PHY_BMCR_RST_NEG);
+#endif
+
+	smc911x_miiphy_write(dev, 1, PHY_BMCR, 0);
 
 	timeout = 5000;
 	do {
