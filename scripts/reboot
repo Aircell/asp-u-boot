@@ -21,7 +21,7 @@ elif test "${target}" = "bankB" ; then
 	setenv kernelblock 680000
 	setenv rootdev /dev/mtdblock6
 else
-	echo Invalid bank ID ${target}
+	run ${target}
 fi
 
 run flashboot
