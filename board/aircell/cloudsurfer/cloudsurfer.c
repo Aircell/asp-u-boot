@@ -171,9 +171,14 @@ static void check_sysconfig_regs(void)
 	}
 }
 
-#define PCA9626B_ADDR		0x70
-#define LEDOUT0			0x1d
+#define CHARGER_ADDR			0x41
+#define BQ2750_ADDR				0x55
+#define MINIMUM_VOLTAGE			3400	/* in mV */
+#define PCA9626B_ADDR			0x70
+#define LEDOUT0					0x1d
 #define PWM0_NO_AUTOINCREMENT	0x02
+
+
 static void turn_on_keypad_leds(void)
 {//PCA9626B
 	unsigned char data[32];
@@ -213,6 +218,77 @@ static void turn_on_keypad_leds(void)
 //	i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT + 22, 1, &data[0], 1);	// Write brightness to zone-S3
 }
 
+/* Check the current battery voltage via the fuel guage
+ * Return 1 if OK, otherwise 0 
+ */
+unsigned short check_voltage(void)
+{
+	unsigned short sdata;
+	
+	i2c2_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	if ( i2c2_read(BQ2750_ADDR,0x08,1,(unsigned char*)&sdata,2) )
+		return 0;
+	printf("Current Voltage is %d\n",sdata);
+	return sdata;
+
+}
+
+int enable_fast_charge(int enable) 
+{
+	unsigned char data;
+	data = 0;
+	i2c2_write(CHARGER_ADDR,0x03,1,&data,1);
+	if ( enable ){
+		printf("Enabling");
+		data = 0x02;
+	} else {
+		printf("Disabling");
+		data = 0x03;
+	}
+	printf(" Fast Charging\n");
+	i2c2_write(CHARGER_ADDR,0x01,1,&data,1);
+	return 1;
+}
+/* Determine if we have enough umph to do anything useful */
+void check_energy(void) 
+{	
+	int charging = 0; 
+	unsigned short voltage;
+	int cradled = 0;	
+	unsigned char data;
+	unsigned int count = 0;
+
+	if ( (cradled = !omap_get_gpio_datain(AIRCELL_POWER_APPLIED_DETECT))) {
+		printf("In Cradle\n");
+	} else {
+		printf("Not in Cradle\n");
+	}
+	voltage = check_voltage();
+	if ( cradled ) {
+		if ( voltage < MINIMUM_VOLTAGE )  {
+			if ( !(charging = enable_fast_charge(1)) ) {
+				printf("Battery low and can't charge - Loop forever\n");
+				while ( 1 ) ;
+			}
+			/* Loop till we get energy to do stuff */
+			while ( check_voltage() < MINIMUM_VOLTAGE ) {
+				udelay(1000000);
+				count++;
+				if ( count & 0x0001 ) 
+					data = 0;
+				else 
+					data = 40; 	
+				i2c2_write(PCA9626B_ADDR, PWM0_NO_AUTOINCREMENT +  6, 1, &data, 1);	// Write brightness to zone-home
+			}
+		 	enable_fast_charge(0);
+		}
+	} else {
+		if ( voltage < MINIMUM_VOLTAGE )  {
+			printf("He's dead, Jim!\n");
+			while ( 1 ) ;
+		}
+	}
+}
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
@@ -231,9 +307,16 @@ int misc_init_r(void)
 	init_vaux1_voltage();
 	fetch_production_data();
 	if ( is_dm3730_som() == 0 ) {
-		printf("This is not a LogicPD DM3730 SOM!\n");
+		printf("This is not a supported SOM!\n");
 		while ( 1 ) ;
 	}
+
+	/* If battery powered, check to make sure we have sufficient energy
+     * to startup...
+	 */
+    if ( omap_get_gpio_datain(AIRCELL_BATTERY_POWERED) != 0 ) {
+		check_energy();
+	}	
 
 	setup_net_chip();
 
