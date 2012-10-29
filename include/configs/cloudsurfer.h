@@ -249,9 +249,9 @@
     "stable=bankA\0"                      \
     "kernelblock=280000\0"                      \
     "nfsoptions=,wsize=1500,rsize=1500\0"               \
-    "mem1=mem=126M@0x80000000\0" \
+    "mem1=mem=124M@0x80000000\0" \
     "mem2=mem=128M@0x88000000\0" \
-    "memsize=126M\0" \
+    "memsize=124M\0" \
     "rekern=bootp; nand erase ${kernelblock} 400000; nand write ${loadaddr} ${kernelblock} 400000; boot\0" \
     "nfsboot=bootp; setenv bootargs ${mem1} ${mem2} omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=/dev/nfs rw nfsroot=${rootpath}${nfsoptions} ip=dhcp init=/init androidboot.console=${consoledev} ${otherbootargs};bootm ${loadaddr}\0" \
     "flashboot=setenv bootargs ${mem1} ${mem2} omapfb.vrfb=${rotate_type} vram=${vram} omapfb.rotate=${rotate} omapfb.vram=${fbram} omapfb.debug=${display_debug} console=${consoledev},${baudrate} root=${rootdev} rootfstype=yaffs2 rw init=/init androidboot.console=${consoledev} ${otherbootargs}; nand read ${loadaddr} ${kernelblock} 400000; bootm ${loadaddr}\0" \
