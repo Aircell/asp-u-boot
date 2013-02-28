@@ -871,6 +871,7 @@ out:
  * be allowed
  */
 #define DM3730SOM_AIRCELL_VERSION "D001848"
+#define DM3730SOM_AIRCELL_VERSION_1 "1021956"
 #define DM3730SOM_COMMERCIAL_PART_NUM "1017318"
 #define DM3730SOM_INDUSTRIAL_PART_NUM  "1017348"
 
@@ -881,6 +882,9 @@ int is_dm3730_som(void)
 	if (!production_data_valid)
 		return 0;
 	extract_product_id_part_number(&product_id_data, buf, sizeof(buf));
+	printf("Proctuct ID is %7.7s\n",buf);
+	if ( strncmp(DM3730SOM_AIRCELL_VERSION_1,buf,7) == 0 )
+        return 1;
 	if ( strncmp(DM3730SOM_AIRCELL_VERSION,buf,7) == 0 )
         return 1;
 	if ( strncmp(DM3730SOM_COMMERCIAL_PART_NUM,buf,7) == 0 )
