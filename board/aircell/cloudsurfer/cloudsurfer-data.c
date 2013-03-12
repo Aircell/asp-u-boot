@@ -86,10 +86,10 @@ static void gpio_i2c_config_pins(void)
 /* Restore SCLK/SDA pins connected to the product ID chip */
 static void gpio_i2c_restore_pins(void)
 {
-	/* Restore I2C3_SCL/I2C_DATA into safe mode; kernel repsonsible
-	 * for muxing I2C3 */
-	//MUX_VAL(CP(I2C3_SCL),       (IEN  | PTD | EN  | M7)); /*I2C3_SCL*/
-	//MUX_VAL(CP(I2C3_SDA),       (IEN  | PTD | EN  | M7)); /*I2C3_SDA*/
+	/* Restore I2C3_SCL/I2C_DATA into I2C mode */
+    MUX_VAL(CP(I2C3_SCL),       (IEN  | PTU | EN  | M0)); /*I2C3_SCL*/
+    MUX_VAL(CP(I2C3_SDA),       (IEN  | PTU | EN  | M0)); /*I2C3_SDA*/
+
 }
 
 #define GPIO_I2C_GPIO_SCLK  184
@@ -848,9 +848,11 @@ int fetch_production_data(void)
 	}
 
 out:
-
+#ifdef TARR
+	/* WHAT! 
 	/* Restore GPIO_OE registers back to reset state (All input) */
 	gpio_oe_force_all_input();
+#endif
 
 	/* Restore the I2C pins we used to reset state (safe mode) */
 	gpio_i2c_restore_pins();
