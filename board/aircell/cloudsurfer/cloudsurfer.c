@@ -55,6 +55,70 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Safe mode HSUSB0_DATA5 */
 #define MUX_LOGIC_HSUSB0_D5_SAFE_MODE()					\
  MUX_VAL(CP(HSUSB0_DATA5),	(IEN  | PTD | EN  | M7)) /*HSUSB0.SAFE_MODE*/
+//Aircell Hardware detect stuff
+#define TWL4030_I2C_BUS			0
+#define CLKGEN1_ADDR 0x49
+#define MADC_ADDR 0x4a
+#define ACIN2_P3_THRESHOLD 50
+#define MAX_CONV_DELAY 300
+
+static int i2c_write_byte(u8 devaddr, u8 regoffset, u8 value) {
+	return i2c_write(devaddr, regoffset, 1, &value, 1);
+}
+
+static int i2c_read_byte(u8 devaddr, u8 regoffset, u8 * value) {
+	return i2c_read(devaddr, regoffset, 1, value, 1);
+}
+
+/* Routine: detect_cloudsurfer_rev_A
+ * Description: Aircell board detection (p3/rev-A)
+ *
+ * Hardware designers have provided a means to detect the board revision
+ * /by examining the SOM pin J2-196 (ACIN2 to the TPS65950) which is a
+ * BFG input on Rev 0 boards, and grounded on Rev A.
+ */
+static int detect_cloudsurfer_rev(void) {
+	u8 msb, lsb;
+	int val;
+
+	//	i2c_set_bus_num(TWL4030_I2C_BUS);
+	/*We assume that there is only one I2C bus */
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);	
+	// Enable clocks
+	i2c_write_byte(CLKGEN1_ADDR, 0x91, 0xd5);
+	// power on MADC (CTRL1)
+	i2c_write_byte(MADC_ADDR, 0x00, 0x01);
+	// Enable CH2 for conversion: SW1SELECT_LSB, bit 2
+	i2c_write_byte(MADC_ADDR, 0x06, 0x04);
+	// Turn on averaging (4 reads per conversion) for CH2
+	i2c_write_byte(MADC_ADDR, 0x08, 0x04);
+	// Request start of conversion: CTRL_SW1, start all-channel conversion
+	i2c_write_byte(MADC_ADDR, 0x12, 0x20);
+	// Wait for conversion
+	//   160 = 39 * 4 plus a bit. See timing table 9-3 in TPS65950 Data Manual
+	udelay(160);
+
+	// Read the voltage
+	i2c_read_byte(MADC_ADDR, 0x3b, &lsb);
+	printf(" %s:lsb is:0x%x \n",__FUNCTION__,lsb);
+	i2c_read_byte(MADC_ADDR, 0x3c, &msb);
+	printf(" %s:msb is:0x%x \n",__FUNCTION__,msb);
+	val = (((int)lsb & 0xc0) >> 6) | ((int)msb << 2);
+	printf("detect_cloudsurfer_rev_A: ACIN2 on TPS65950 reads %d\n", val);
+
+	// Power off MADC
+	i2c_write_byte(MADC_ADDR, 0x00, 0x00);
+
+	if (val < ACIN2_P3_THRESHOLD) {
+		// Pin is grounded on RevA
+		return 1;
+	} else {
+		// Logic-high on P3
+		return 0;
+	}
+}
+
+
 /*
  * Routine: logic_identify
  * Description: Detect if we are running on a Logic or Torpedo.
@@ -87,7 +151,18 @@ unsigned int logic_identify(void)
 			printf("Wrong SOM install!\n\n!");
 			val = 0;
 		}	
-		val = MACH_TYPE_DM3730_SOM_LV;
+		//val = MACH_TYPE_DM3730_SOM_LV;
+		printf(" AKA Cloudsurfer\n");
+		if (detect_cloudsurfer_rev())
+		{
+			printf(" (Rev B)\n");
+			val = MACH_TYPE_CLOUDSURFER_REVA;
+		}
+		else
+		{
+			printf(" (P3 = REV A)\n");
+			val = MACH_TYPE_CLOUDSURFER_P3;
+		}
 	}
 
 	MUX_LOGIC_HSUSB0_D5_SAFE_MODE();
