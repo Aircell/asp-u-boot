@@ -63,11 +63,33 @@ DECLARE_GLOBAL_DATA_PTR;
 #define MAX_CONV_DELAY 300
 
 static int i2c_write_byte(u8 devaddr, u8 regoffset, u8 value) {
-	return i2c_write(devaddr, regoffset, 1, &value, 1);
+	int i;
+	for(i=0; i<10; i++) {
+		if (i2c_write(devaddr, regoffset, 1, &value, 1) == 0) {
+			return 0;
+		} else {
+			if (i < 9) {
+				printf("i2c_write_byte failed, addr=0x%x, offset 0x%x: retry %d/9\n", devaddr, regoffset, i+1);
+			}
+		}
+		udelay(50);
+	}
+	return -1; // failure
 }
 
 static int i2c_read_byte(u8 devaddr, u8 regoffset, u8 * value) {
-	return i2c_read(devaddr, regoffset, 1, value, 1);
+	int i;
+	for(i=0; i<10; i++) {
+		if (i2c_read(devaddr, regoffset, 1, value, 1) == 0) {
+			return 0;
+		} else {
+			if (i < 9) {
+				printf("i2c_read_byte failed, addr=0x%x, offset 0x%x: retry %d/9\n", devaddr, regoffset, i+1);
+			}
+		}
+		udelay(50);
+	}
+	return -1; // failure
 }
 
 /* Routine: detect_cloudsurfer_rev_A
@@ -79,7 +101,8 @@ static int i2c_read_byte(u8 devaddr, u8 regoffset, u8 * value) {
  */
 static int detect_cloudsurfer_rev(void) {
 	u8 msb, lsb;
-	int val;
+	int val; // ADC counts
+	int max = 10; // maximum wait cycles for ADC conversion
 
 	//	i2c_set_bus_num(TWL4030_I2C_BUS);
 	/*We assume that there is only one I2C bus */
@@ -96,7 +119,19 @@ static int detect_cloudsurfer_rev(void) {
 	i2c_write_byte(MADC_ADDR, 0x12, 0x20);
 	// Wait for conversion
 	//   160 = 39 * 4 plus a bit. See timing table 9-3 in TPS65950 Data Manual
-	udelay(160);
+	//udelay(160);
+
+	// No, really wait until it's ready
+	do
+	{
+		udelay(50);
+		i2c_read_byte(MADC_ADDR, 0x12, &lsb);
+		max--;
+		if ((lsb & 0x01) == 0x01) {
+			printf("Waiting for board_detect ADC conversion\n");
+		}
+	}
+	while((lsb & 0x01) == 0x01 && max > 0); // bit goes low when conversion is complete
 
 	// Read the voltage
 	i2c_read_byte(MADC_ADDR, 0x3b, &lsb);
