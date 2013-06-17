@@ -3229,7 +3229,8 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_VERDI_LTE            3247
 #define MACH_TYPE_NANOZOOM             3248
 #define MACH_TYPE_DM3730_SOM_LV        3249
-#define MACH_TYPE_CLOUDSURFER_P3       13249
+#define MACH_TYPE_CLOUDSURFER_P3       3249
+#define MACH_TYPE_CLOUDSURFER_P3_DUPE  13249
 #define MACH_TYPE_CLOUDSURFER_REVA     13250
 #define MACH_TYPE_DM3730_TORPEDO       3250
 #define MACH_TYPE_ANCHOVY              3251
@@ -41890,6 +41891,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_cloudsurfer_p3()	(machine_arch_type == MACH_TYPE_CLOUDSURFER_P3)
 #else
 # define machine_is_cloudsurfer_p3()	(0)
+#endif
+
+#ifdef CONFIG_MACH_DM3730_SOM_LV
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type	__machine_arch_type
+# else
+#  define machine_arch_type	MACH_TYPE_CLOUDSURFER_P3_DUPE
+# endif
+# define machine_is_cloudsurfer_p3_dupe()	(machine_arch_type == MACH_TYPE_CLOUDSURFER_P3_DUPE)
+#else
+# define machine_is_cloudsurfer_p3_dupe()	(0)
 #endif
 
 #ifdef CONFIG_MACH_DM3730_SOM_LV
