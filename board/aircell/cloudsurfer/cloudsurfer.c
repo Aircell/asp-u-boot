@@ -389,10 +389,13 @@ int misc_init_r(void)
 	/* If battery powered, check to make sure we have sufficient energy
      * to startup...
 	 */
+ //Currently We don't need this feature with Aircell phone.
+ // This prevents device to boot with low voltage. Enable it if required.
+#if 0
     if ( omap_get_gpio_datain(AIRCELL_BATTERY_POWERED) != 0 ) {
 		check_energy();
 	}	
-
+#endif
 	setup_net_chip();
 
 	gd->bd->bi_arch_number = logic_identify();
