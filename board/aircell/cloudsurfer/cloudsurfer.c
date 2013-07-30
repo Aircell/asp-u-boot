@@ -449,6 +449,13 @@ int misc_init_r(void)
 	dieid_num_r();
 
 	check_sysconfig_regs();
+
+	if (!omap_request_gpio(AIRCELL_WAKE_ON_LAN)) {
+		omap_set_gpio_direction(AIRCELL_WAKE_ON_LAN, 1);
+	} else {
+		printf("Could not request GPIO 10\n");
+	}
+
 	return 0;
 }
 

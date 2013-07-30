@@ -316,7 +316,13 @@ void set_muxconf_regs(void)
 	MUX_VAL(CP(SYS_BOOT5),		(IEN  | PTD | DIS | M4)); /*GPIO_7*/
 	MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M4)); /*GPIO_8*/
 	MUX_VAL(CP(SYS_OFF_MODE),	(IEN  | PTD | DIS | M0)); /*SYS_OFF_MODE*/
-	MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M0)); /*SYS_CLKOUT1*/
+
+/* Topher - Rev A change: WLAN_nIRQ is routed in the carrier board to
+ * pin AG25 on the omap: SYS_CLKOUT1 is mode 0, GPIO_10 is mode 4,
+ * and mode 7 is neither (safe_mode).
+ */
+	MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M4)); /*SYS_CLKOUT1 / GPIO_10*/
+
 /* TARR - LED_ENABLE */
 	MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M4)); /*GPIO_186*/
 
